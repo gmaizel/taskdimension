@@ -1,0 +1,198 @@
+/*
+TaskDimension - lightweight project management tool
+Copyright (c) 2015 George Maizel <gmaizel@gmail.com>
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License version 3 as published by
+the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for
+more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
+*/
+
+body {
+	background: #666680;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	font-family: Verdana;
+}
+
+div.ProjectView {
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	white-space: nowrap;
+}
+
+div.ProjectView>h1 {
+	padding: 10px 6px;
+	margin: 0;
+	color: white;
+	position: sticky;
+	left: 0px;
+	top: 0px;
+}
+
+div.list {
+	background: #cccccc;
+	border: 1px solid black;
+	border-radius: 10px;
+	width: 220px;
+	display: inline-block;
+	margin: 8px;
+	padding: 8px;
+	vertical-align: top;
+	min-height: 60px;
+	max-height: calc(100% - 100px);
+	overflow: auto;
+	position: relative;
+}
+
+div.list-placeholder {
+	border: 1px dashed #808080;
+	border-radius: 10px;
+	width: 220px;
+	height: 60px;
+	display: inline-block;
+	margin: 8px;
+	padding: 8px;
+	vertical-align: top;
+	position: relative;
+}
+
+div.ListEditor {
+	position: absolute;
+	width: 220px;
+	padding: 7px 9px;
+}
+
+div.ListEditor input {
+	width: 200px;
+	margin: 0px 10px;
+	font-size: 18px;
+	text-align: center;
+	height: 30px;
+	border: 1px solid black;
+}
+
+div.TaskEditor {
+	position: absolute;
+	width: 200px;
+	padding: 7px 9px;
+}
+
+div.TaskEditor input {
+	width: 180px;
+	margin: 0px 10px;
+	font-size: 18px;
+	text-align: center;
+	height: 30px;
+	border: 1px solid black;
+}
+
+div.list>h2 {
+	position: sticky;
+	background: #cccccc;
+	top: -8px;
+	cursor: move;
+	width:100%;
+	font-size: 18px;
+	height: 30px;
+	display: block;
+	margin: -8px 0px 4px 0px;
+	padding-top: 8px;
+	text-align: center;
+}
+
+div.list div.task {
+	border: 1px solid black;
+	border-radius: 4px;
+	background: white;
+	margin: 4px 0px;
+	padding: 6px;
+	cursor: move;
+	white-space: normal;
+}
+
+div.list div.task-placeholder {
+	border: 1px dashed #808080;
+	border-radius: 4px;
+	margin: 4px 0px;
+	padding: 6px;
+}
+
+.dialogBackground {
+	position: fixed;
+	top: 0px;
+	left:0px;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.1);
+	z-index: 100;
+}
+
+.popupMenu {
+	position: absolute;
+	min-width: 100px;
+	min-height: 20px;
+	padding: 0px;
+	border: 1px solid;
+	border-color: white #666666 #666666 white;
+	color:#000033;
+	box-shadow: 2px 2px 8px 1px rgba(0,0,0, 0.3);
+	cursor: default;
+	background: #cccccc;
+}
+
+.popupMenuItem {
+	padding: 4px 10px;
+	color: black;
+}
+
+.popupMenuItemDisabled {
+	padding: 4px 10px;
+	color: #999999;
+}
+
+.popupMenuSeparator {
+	margin: 1px 0px;
+	border-top: 1px solid #aaaaaa;
+	border-bottom: 1px solid white;
+}
+
+.confirmBox {
+	position: absolute;
+	width: 250px;
+	cursor: default;
+	padding: 0px;
+	border: 1px solid black;
+	border-radius: 10px;
+	color:#000033;
+	box-shadow: 2px 2px 8px 1px rgba(0,0,0, 0.3);
+	cursor: default;
+	background: #eeeeee;
+	padding:10px;
+	text-align: center;
+
+}
+
+.confirmBox>h2 {
+	width:100%;
+	font-size: 14px;
+	margin:0px 4px 10px 4px;
+	display: block;
+}
+
+.confirmBox>input {
+	margin:0px 20px;
+}

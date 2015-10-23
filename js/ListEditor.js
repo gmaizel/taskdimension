@@ -31,6 +31,7 @@ function ListEditor()
 	this._titleEditor = document.createElement("input");
 	this._titleEditor.type = "text";
 	this._titleEditor.addEventListener('input', this._onTextChange.bind(this));
+	this._titleEditor.addEventListener('contextmenu', function(event) { event.stopPropagation(); });
 	this._container.appendChild(this._titleEditor);
 
 	this._saveButton = document.createElement("input");

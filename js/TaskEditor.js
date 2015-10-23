@@ -30,6 +30,7 @@ function TaskEditor()
 
 	this._titleEditor = document.createElement("textarea");
 	this._titleEditor.addEventListener('input', this._onTextChange.bind(this));
+	this._titleEditor.addEventListener('contextmenu', function(event) { event.stopPropagation(); });
 	this._container.appendChild(this._titleEditor);
 
 	this._saveButton = document.createElement("input");

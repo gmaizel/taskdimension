@@ -67,6 +67,7 @@ ProjectView.prototype._addList = function(listData, insertBeforeElement)
 	});
 
 	list.titleElement = document.createElement("h2");
+	list.titleElement.addEventListener('dblclick', this._editList.bind(this, list.id));
 	list.element.appendChild(list.titleElement);
 
 	this._updateList(list, listData);
@@ -104,11 +105,13 @@ ProjectView.prototype._addTask = function(list, taskData, insertBeforeElement)
 	task.element.className = "task";
 	task.element.draggable = true;
 	task.element.addEventListener('contextmenu', this._onTaskContextMenu.bind(this, task.id));
+	task.element.addEventListener('dblclick', this._editTask.bind(this, task.id));
 	task.element.addEventListener('dragstart', this._onDragTaskStart.bind(this, task.id));
 	task.element.addEventListener('dragend', this._onDragEnd.bind(this));
 	task.element.addEventListener('mousedown', function(event) {
 		event.stopPropagation();
 	});
+
 
 	this._updateTask(task, taskData);
 

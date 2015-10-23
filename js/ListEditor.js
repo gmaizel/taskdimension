@@ -21,16 +21,30 @@ function ListEditor()
 {
 	this._layer = document.createElement("div");
 	this._layer.className = "dialogBackground";
-	this._layer.addEventListener('mousedown', this._onWorkspaceClick.bind(this));
+	this._layer.addEventListener('mousedown', this._cancel.bind(this));
 
 	this._container = document.createElement("div");
 	this._container.className = "ListEditor";
+	this._container.addEventListener('mousedown', function(event) { event.stopPropagation(); });
 	this._layer.appendChild(this._container);
 
 	this._titleEditor = document.createElement("input");
 	this._titleEditor.type = "text";
-	this._titleEditor.addEventListener('mousedown', function(event) { event.stopPropagation(); });
+	this._titleEditor.addEventListener('input', this._onTextChange.bind(this));
 	this._container.appendChild(this._titleEditor);
+
+	this._saveButton = document.createElement("input");
+	this._saveButton.type = "button";
+	this._saveButton.value = "Save";
+	this._saveButton.addEventListener('click', this._save.bind(this));
+	this._container.appendChild(this._saveButton);
+
+	this._cancelButton = document.createElement("input");
+	this._cancelButton.type = "button";
+	this._cancelButton.value = "Cancel";
+	this._cancelButton.addEventListener('click', this._cancel.bind(this));
+	this._container.appendChild(this._cancelButton);
+
 }
 
 ListEditor.prototype.show = function(listElement, listDetails, callback)
@@ -41,11 +55,12 @@ ListEditor.prototype.show = function(listElement, listDetails, callback)
 	var rect = listElement.getBoundingClientRect();
 	this._container.style.left = rect.left + "px";
 	this._container.style.top = rect.top + "px";
+	this._container.style.width = rect.width + "px";
 	document.body.appendChild(this._layer);
 
 	Keyboard.pushListener(this._onKeyDown.bind(this), null);
 	this._titleEditor.focus();
-	this._titleEditor.select();
+	this._onTextChange();
 }
 
 ListEditor.prototype.hide = function()
@@ -58,19 +73,30 @@ ListEditor.prototype._onKeyDown = function(event)
 {
 	switch (event.keyCode) {
 	case Keyboard.ESCAPE:
-		this._callback(null);
+		this._cancel();
 		break;
 
 	case Keyboard.RETURN:
-		var title = this._titleEditor.value.trim();
-		if (title) {
-			this._callback({title: title});
-		}
+		this._save();
 		break;
 	}
 }
 
-ListEditor.prototype._onWorkspaceClick = function()
+ListEditor.prototype._onTextChange = function()
+{
+	var title = this._titleEditor.value.trim();
+	this._saveButton.disabled = !title;
+}
+
+ListEditor.prototype._save = function()
+{
+	var title = this._titleEditor.value.trim();
+	if (title) {
+		this._callback({ title: title, description: "" });
+	}
+}
+
+ListEditor.prototype._cancel = function()
 {
 	this._callback(null);
 }

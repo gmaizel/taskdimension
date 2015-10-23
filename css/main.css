@@ -27,6 +27,21 @@ body {
 	font-family: Verdana;
 }
 
+input[type=button], input[type=text], textarea {
+	border: 1px solid black;
+	border-radius: 4px;
+}
+
+input[type=button] {
+	margin-left: 8px;
+}
+
+
+input[type=button]:focus, input[type=text]:focus, textarea:focus {
+	outline: none;
+	box-shadow: #5070ff 0px 0px 2px 2px;
+}
+
 div.ProjectView {
 	width: 100%;
 	height: 100%;
@@ -62,7 +77,7 @@ div.list-placeholder {
 	border: 1px dashed #808080;
 	border-radius: 10px;
 	width: 220px;
-	height: 60px;
+	height: 140px;
 	display: inline-block;
 	margin: 8px;
 	padding: 8px;
@@ -70,43 +85,49 @@ div.list-placeholder {
 	position: relative;
 }
 
-div.ListEditor {
+div.ListEditor, div.TaskEditor {
 	position: absolute;
+	margin: -10px -14px 0px -14px;
+	background: #50a0ff;
+	border: 1px solid black;
+	border-radius: 4px;
 	width: 220px;
-	padding: 7px 9px;
+	padding: 9px 13px 6px 13px;
+	box-shadow: black 0px 0px 10px;
+	text-align: right;
 }
 
-div.ListEditor input {
-	width: 200px;
-	margin: 0px 10px;
+div.ListEditor input[type=text] {
+	width: 100%;
+	margin: 0px 0px 8px;
+	padding: 8px;
+	font-family: Verdana;
 	font-size: 18px;
+	font-weight: bold;
 	text-align: center;
-	height: 30px;
-	border: 1px solid black;
+	border-radius: 10px 10px 4px 4px;
 }
 
-div.TaskEditor {
-	position: absolute;
-	width: 200px;
-	padding: 7px 9px;
-}
-
-div.TaskEditor input {
-	width: 180px;
-	margin: 0px 10px;
-	font-size: 18px;
-	text-align: center;
-	height: 30px;
-	border: 1px solid black;
+div.TaskEditor textarea {
+	resize: none;
+	width: 100%;
+	margin: 0px 0px 8px;
+	background: white;
+	padding: 6px 6px 8px 6px;
+	overflow: hidden;
+	font-family: Verdana;
+	font-size: 14px;
 }
 
 div.list>h2 {
+	font-family: Verdana;
 	position: sticky;
 	background: #cccccc;
 	top: -8px;
 	cursor: move;
 	width:100%;
 	font-size: 18px;
+	font-weight: bold;
 	height: 30px;
 	display: block;
 	margin: -8px 0px 4px 0px;
@@ -121,6 +142,7 @@ div.list div.task {
 	margin: 4px 0px;
 	padding: 6px;
 	cursor: move;
+	font-size: 14px;
 	white-space: normal;
 }
 
@@ -129,6 +151,7 @@ div.list div.task-placeholder {
 	border-radius: 4px;
 	margin: 4px 0px;
 	padding: 6px;
+	min-height: 16px;
 }
 
 .dialogBackground {
@@ -137,7 +160,7 @@ div.list div.task-placeholder {
 	left:0px;
 	width: 100%;
 	height: 100%;
-	background: rgba(0, 0, 0, 0.1);
+	background: rgba(0, 0, 0, 0.2);
 	z-index: 100;
 }
 
@@ -159,6 +182,10 @@ div.list div.task-placeholder {
 	color: black;
 }
 
+.popupMenuItem:hover {
+	background: #50a0ff;
+}
+
 .popupMenuItemDisabled {
 	padding: 4px 10px;
 	color: #999999;
@@ -172,27 +199,21 @@ div.list div.task-placeholder {
 
 .confirmBox {
 	position: absolute;
+	background: #50a0ff;
+	border: 1px solid black;
+	border-radius: 4px;
 	width: 250px;
 	cursor: default;
-	padding: 0px;
-	border: 1px solid black;
-	border-radius: 10px;
-	color:#000033;
-	box-shadow: 2px 2px 8px 1px rgba(0,0,0, 0.3);
-	cursor: default;
-	background: #eeeeee;
-	padding:10px;
-	text-align: center;
-
+	padding: 12px 16px;
+	box-shadow: black 0px 0px 10px;
+	text-align: right;
 }
 
 .confirmBox>h2 {
 	width:100%;
+	text-align: center;
+	color: white;
 	font-size: 14px;
-	margin:0px 4px 10px 4px;
+	margin:0px 4px 12px 4px;
 	display: block;
-}
-
-.confirmBox>input {
-	margin:0px 20px;
 }

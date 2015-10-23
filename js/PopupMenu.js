@@ -28,8 +28,6 @@ function PopupMenu(menu)
 		if (menu[i].title && menu[i].callback) {
 			item.className = "popupMenuItem";
 			item.innerHTML = menu[i].title.htmlEscape();
-			item.addEventListener('mouseover', function(evt) { this.style.background='#50a0ff'; });
-			item.addEventListener('mouseout', function(evt) { this.style.background=''; });
 			item.addEventListener('click', this._onItemClick.bind(this, menu[i].callback));
 			this._menuBox.appendChild(item);
 		}
@@ -46,6 +44,7 @@ function PopupMenu(menu)
 
 	this._dialogContainer = document.createElement("div");
 	this._dialogContainer.className = "dialogBackground";
+	this._dialogContainer.style.background = "transparent";
 	this._dialogContainer.addEventListener('mousedown', this._hide.bind(this));
 	this._dialogContainer.appendChild(this._menuBox);
 }

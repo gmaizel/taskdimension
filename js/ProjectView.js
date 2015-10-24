@@ -39,6 +39,8 @@ function ProjectView(projectData)
 		var listData = projectData.lists[i];
 		this._addList(listData);
 	}
+
+	this._dragInfo = null;
 }
 
 ProjectView.prototype.getDOM = function()
@@ -189,7 +191,6 @@ ProjectView.prototype._onTaskContextMenu = function(taskId, event)
 ProjectView.prototype._createListPlaceholder = function(referenceElement)
 {
 	var ph = document.createElement("div");
-	ph.id = "list#ph";
 	ph.className = "list-placeholder";
 	if (referenceElement) {
 		var style = window.getComputedStyle(referenceElement, null);
@@ -197,11 +198,6 @@ ProjectView.prototype._createListPlaceholder = function(referenceElement)
 		ph.style.height = style.getPropertyValue('height');
 	}
 	return ph;
-}
-
-ProjectView.prototype._findListPlaceholder = function()
-{
-	return document.getElementById("list#ph");
 }
 
 ProjectView.prototype._getListIdFromElement = function(element)
@@ -338,7 +334,6 @@ ProjectView.prototype._deleteList = function(listId)
 ProjectView.prototype._createTaskPlaceholder = function(referenceElement)
 {
 	var ph = document.createElement("div");
-	ph.id = "task#ph";
 	ph.className = "task-placeholder";
 	if (referenceElement) {
 		var style = window.getComputedStyle(referenceElement, null);
@@ -346,11 +341,6 @@ ProjectView.prototype._createTaskPlaceholder = function(referenceElement)
 		ph.style.height = style.getPropertyValue('height');
 	}
 	return ph;
-}
-
-ProjectView.prototype._findTaskPlaceholder = function()
-{
-	return document.getElementById("task#ph");
 }
 
 ProjectView.prototype._getTaskIdFromElement = function(element)
@@ -461,23 +451,19 @@ ProjectView.prototype._deleteTask = function(taskId)
 
 // === Drag & Drop ===
 
-ProjectView.prototype._getBundle = function(event)
-{
-	try {
-		return JSON.parse(event.dataTransfer.getData("text/json"));
-	}
-	catch (e) {
-		return null;
-	}
-}
-
 ProjectView.prototype._onDragListStart = function(listId, event)
 {
 	var list = this._lists[listId];
-	var ph = this._createListPlaceholder(list.element);
 	var nextListId = this._getListIdFromElement(list.element.nextSibling);
-	var bundle = {listId: listId, nextListId: nextListId};
-	event.dataTransfer.setData("text/json", JSON.stringify(bundle));
+	var ph = this._createListPlaceholder(list.element);
+
+	this._dragInfo = {
+		placeholder: ph,
+		listId: listId,
+		srcNextListId: nextListId
+	};
+
+	event.dataTransfer.setData("text", list.title);
 
 	setTimeout(function() {
 		this._container.insertBefore(ph, list.element);
@@ -489,11 +475,18 @@ ProjectView.prototype._onDragTaskStart = function(taskId, event)
 {
 	var task = this._tasks[taskId];
 	var listId = this._getListIdFromElement(task.element.parentNode);
-	var list = this._lists[listId];
-	var ph = this._createTaskPlaceholder(task.element);
 	var nextTaskId = this._getTaskIdFromElement(task.element.nextSibling);
-	var bundle = {taskId: taskId, srcListId: listId, nextTaskId: nextTaskId};
-	event.dataTransfer.setData("text/json", JSON.stringify(bundle));
+	var ph = this._createTaskPlaceholder(task.element);
+	var list = this._lists[listId];
+
+	this._dragInfo = {
+		placeholder: ph,
+		taskId: taskId,
+		srcNextTaskId: nextTaskId,
+		srcListId: listId
+	}
+
+	event.dataTransfer.setData("text", task.title);
 
 	setTimeout(function() {
 		list.element.insertBefore(ph, task.element);
@@ -505,98 +498,111 @@ ProjectView.prototype._onDragTaskStart = function(taskId, event)
 
 ProjectView.prototype._onWorkspaceDragOver = function(event)
 {
-	var bundle = this._getBundle(event);
+	if (!this._dragInfo) return;
 
-	if (bundle && bundle.listId) {
+	if (this._dragInfo.listId) {
 		var insertBeforeElement = this._findInsertionPointForList(event.pageX);
-		var ph = this._findListPlaceholder();
-		if (ph) {
-			if (ph.nextSibling != insertBeforeElement) {
-				this._container.insertBefore(ph, insertBeforeElement);
-			}
-			event.dataTransfer.dropEffect = "move";
-			event.preventDefault();
+		var ph = this._dragInfo.placeholder;
+		if (ph.nextSibling != insertBeforeElement) {
+			this._container.insertBefore(ph, insertBeforeElement);
 		}
+		event.dataTransfer.dropEffect = "move";
+		event.preventDefault();
 	}
-	else if (bundle && bundle.taskId) {
+	else if (this._dragInfo.taskId) {
 		var list = this._findNearestList(event.pageX);
 		var insertBeforeElement = this._findInsertionPointForTask(list, event.pageY);
-		var ph = this._findTaskPlaceholder();
-		if (ph) {
-			if (ph.parentNode != list.element || ph.nextSibling != insertBeforeElement) {
-				list.element.insertBefore(ph, insertBeforeElement);
-			}
-			event.dataTransfer.dropEffect = "move";
-			event.preventDefault();
+		var ph = this._dragInfo.placeholder;
+		if (ph.parentNode != list.element || ph.nextSibling != insertBeforeElement) {
+			list.element.insertBefore(ph, insertBeforeElement);
 		}
+		event.dataTransfer.dropEffect = "move";
+		event.preventDefault();
 	}
 }
 
 ProjectView.prototype._onWorkspaceDragDrop = function(event)
 {
-	var bundle = this._getBundle(event);
+	if (!this._dragInfo) return;
 
-	if (bundle && bundle.listId) {
-		var ph = this._findListPlaceholder();
-		var list = this._lists[bundle.listId];
+	if (this._dragInfo.listId) {
+		var ph = this._dragInfo.placeholder;
+		var list = this._lists[this._dragInfo.listId];
 		this._container.insertBefore(list.element, ph);
 		this._container.removeChild(ph);
 		var nextListId = this._getListIdFromElement(list.element.nextSibling);
-		if (nextListId != bundle.nextListId) {
+		if (nextListId != this._dragInfo.srcNextListId) {
 			Request.send("api/list/move.php", {listId: list.id, beforeListId: nextListId}, function(status, result) {
 				if (status != Request.STATUS_SUCCESS) return alert(result.message);
 			});
 		}
+		this._dragInfo = null;
 		event.preventDefault();
 	}
-	else if (bundle && bundle.taskId) {
-		var ph = this._findTaskPlaceholder();
-		var task = this._tasks[bundle.taskId];
+	else if (this._dragInfo.taskId) {
+		var ph = this._dragInfo.placeholder;
+		var task = this._tasks[this._dragInfo.taskId];
 		var newListId = this._getListIdFromElement(ph.parentNode);
 		ph.parentNode.insertBefore(task.element, ph);
 		ph.parentNode.removeChild(ph);
 		var nextTaskId = this._getTaskIdFromElement(task.element.nextSibling);
-		if (newListId != bundle.srcListId || nextTaskId != bundle.nextTaskId) {
+		if (newListId != this._dragInfo.srcListId || nextTaskId != this._dragInfo.srcNextTaskId) {
 			Request.send("api/task/move.php", {taskId: task.id, listId: newListId, beforeTaskId: nextTaskId}, function(status, result) {
 				if (status != Request.STATUS_SUCCESS) return alert(result.message);
 			});
 		}
+		this._dragInfo = null;
 		event.preventDefault();
 	}
 }
 
 ProjectView.prototype._onDragEnd = function(event)
 {
-	if (event.dataTransfer.dropEffect != "none") {
-		// should already be handled by drop event
-		return;
-	}
+	if (!this._dragInfo) return;
 
-	var bundle = this._getBundle(event);
+	if (this._dragInfo.listId) {
+		var ph = this._dragInfo.placeholder;
+		var list = this._lists[this._dragInfo.listId];
+		var srcNextList = this._dragInfo.srcNextListId ? this._lists[this._dragInfo.srcNextListId] : null;
+		var insertBeforeElement = srcNextList ? srcNextList.element : null;
 
-	if (bundle && bundle.listId) {
-		var ph = this._findListPlaceholder();
-		var list = this._lists[bundle.listId];
-		var nextList = bundle.nextListId ? this._lists[bundle.nextListId] : null;
-		var insertBeforeElement = nextList ? nextList.element : null;
-
-		this._container.insertBefore(ph, insertBeforeElement);
-		window.setTimeout(function() {
+		if (navigator.userAgent.indexOf("Firefox") >= 0) {
+			// On drag cancel Firefox draws "dragged element flies to its original location"
+			// animation, so if I immediately return that element to the DOM, it will look weird.
+			// Have to move placeholder there and wait a bit.
+			// Does not happen in other browsers.
+			this._container.insertBefore(ph, insertBeforeElement);
+			window.setTimeout(function() {
+				this._container.removeChild(ph);
+				this._container.insertBefore(list.element, insertBeforeElement);
+			}.bind(this), 400);
+		}
+		else {
 			this._container.removeChild(ph);
 			this._container.insertBefore(list.element, insertBeforeElement);
-		}.bind(this), 400);
-	}
-	else if (bundle && bundle.taskId) {
-		var ph = this._findTaskPlaceholder();
-		var task = this._tasks[bundle.taskId];
-		var list = this._lists[bundle.srcListId];
-		var nextTask = bundle.nextTaskId ? this._tasks[bundle.nextTaskId] : null;
-		var insertBeforeElement = nextTask ? nextTask.element : null;
+		}
 
-		list.element.insertBefore(ph, insertBeforeElement);
-		window.setTimeout(function() {
-			list.element.removeChild(ph);
-			list.element.insertBefore(task.element, insertBeforeElement);
-		}.bind(this), 400);
+		this._dragInfo = null;
+	}
+	else if (this._dragInfo.taskId) {
+		var ph = this._dragInfo.placeholder;
+		var task = this._tasks[this._dragInfo.taskId];
+		var srcList = this._lists[this._dragInfo.srcListId];
+		var srcNextTask = this._dragInfo.srcNextTaskId ? this._tasks[this._dragInfo.srcNextTaskId] : null;
+		var insertBeforeElement = srcNextTask ? srcNextTask.element : null;
+
+		if (navigator.userAgent.indexOf("Firefox") >= 0) {
+			srcList.element.insertBefore(ph, insertBeforeElement);
+			window.setTimeout(function() {
+				srcList.element.removeChild(ph);
+				srcList.element.insertBefore(task.element, insertBeforeElement);
+			}.bind(this), 400);
+		}
+		else {
+			srcList.element.removeChild(ph);
+			srcList.element.insertBefore(task.element, insertBeforeElement);
+		}
+
+		this._dragInfo = null;
 	}
 }

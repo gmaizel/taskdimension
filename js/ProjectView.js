@@ -284,6 +284,18 @@ ProjectView.prototype._createList = function(insertBeforeElement)
 {
 	var ph = this._createListPlaceholder(null);
 	this._container.insertBefore(ph, insertBeforeElement);
+
+	// move new list placeholder into view if needed
+	var margin = 20;
+	var phRight = ph.offsetLeft + ph.offsetWidth;
+	var scrollRight = this._container.scrollLeft + this._container.clientWidth;
+	if (ph.offsetLeft - margin < this._container.scrollLeft) {
+		this._container.scrollLeft = ph.offsetLeft - margin;
+	}
+	else if (phRight + margin > scrollRight) {
+		this._container.scrollLeft = phRight + margin - this._container.clientWidth;
+	}
+
 	var editor = new ListEditor();
 
 	editor.show(ph, {}, function(listData) {

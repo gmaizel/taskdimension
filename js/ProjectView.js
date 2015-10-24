@@ -21,16 +21,20 @@ function ProjectView(projectData)
 {
 	this._projectId = projectData.projectId;
 
-	this._container = document.createElement("div");
-	this._container.className = "ProjectView";
-	this._container.addEventListener('contextmenu', this._onWorkspaceContextMenu.bind(this));
-	this._container.addEventListener('dragover', this._onWorkspaceDragOver.bind(this));
-	this._container.addEventListener('drop', this._onWorkspaceDragDrop.bind(this));
+	this._element = this._container = document.createElement("div");
+	this._element.className = "ProjectView";
 
 	this._header = document.createElement("h1");
 	this._header.innerHTML = projectData.title.htmlEscape();
 	this._header.title = projectData.description;
-	this._container.appendChild(this._header);
+	this._element.appendChild(this._header);
+
+	this._container = document.createElement("div");
+	this._container.className = "container";
+	this._container.addEventListener('contextmenu', this._onWorkspaceContextMenu.bind(this));
+	this._container.addEventListener('dragover', this._onWorkspaceDragOver.bind(this));
+	this._container.addEventListener('drop', this._onWorkspaceDragDrop.bind(this));
+	this._element.appendChild(this._container);
 
 	this._lists = {};
 	this._tasks = {};
@@ -45,7 +49,7 @@ function ProjectView(projectData)
 
 ProjectView.prototype.getDOM = function()
 {
-	return this._container;
+	return this._element;
 }
 
 ProjectView.prototype._addList = function(listData, insertBeforeElement)
@@ -62,19 +66,23 @@ ProjectView.prototype._addList = function(listData, insertBeforeElement)
 	list.element.addEventListener('dragstart', this._onDragListStart.bind(this, list.id));
 	list.element.addEventListener('dragend', this._onDragEnd.bind(this));
 	list.element.addEventListener('mousedown', function(event) {
-		if (event.target != list.titleElement) {
+		if (event.target != list.header) {
 			event.preventDefault();
 			event.stopPropagation();
 		}
 	});
 
-	list.titleElement = document.createElement("h2");
-	list.titleElement.addEventListener('dblclick', this._editList.bind(this, list.id));
-	list.element.appendChild(list.titleElement);
+	list.header = document.createElement("h2");
+	list.header.addEventListener('dblclick', this._editList.bind(this, list.id));
+	list.element.appendChild(list.header);
+
+	list.content = document.createElement("ul");
+	list.element.appendChild(list.content);
+
+	list.footer = document.createElement("footer");
+	list.element.appendChild(list.footer);
 
 	this._updateList(list, listData);
-
-	this._container.insertBefore(list.element, insertBeforeElement);
 
 	if (listData.tasks) {
 		for (var j = 0; j < listData.tasks.length; j++) {
@@ -82,12 +90,14 @@ ProjectView.prototype._addList = function(listData, insertBeforeElement)
 			this._addTask(list, taskData);
 		}
 	}
+
+	this._container.insertBefore(list.element, insertBeforeElement);
 }
 
 ProjectView.prototype._updateList = function(list, listData)
 {
 	list.title = listData.title;
-	list.titleElement.innerHTML = list.title.htmlEscape();
+	list.header.innerHTML = list.title.htmlEscape();
 }
 
 ProjectView.prototype._removeList = function(list)
@@ -102,7 +112,7 @@ ProjectView.prototype._addTask = function(list, taskData, insertBeforeElement)
 	task.id = taskData.taskId;
 	this._tasks[task.id] = task;
 
-	task.element = document.createElement("div");
+	task.element = document.createElement("li");
 	task.element.id = "task#" + task.id;
 	task.element.className = "task";
 	task.element.draggable = true;
@@ -114,10 +124,9 @@ ProjectView.prototype._addTask = function(list, taskData, insertBeforeElement)
 		event.stopPropagation();
 	});
 
-
 	this._updateTask(task, taskData);
 
-	list.element.insertBefore(task.element, insertBeforeElement);
+	list.content.insertBefore(task.element, insertBeforeElement);
 }
 
 ProjectView.prototype._updateTask = function(task, taskData)
@@ -202,7 +211,16 @@ ProjectView.prototype._createListPlaceholder = function(referenceElement)
 
 ProjectView.prototype._getListIdFromElement = function(element)
 {
-	return element ? element.id.split('#')[1] : null;
+	var elementId = null;
+	if (element) {
+		if (element.id) {
+			elementId = element.id;
+		}
+		else if (element.parentNode) {
+			elementId = element.parentNode.id;
+		}
+	}
+	return elementId ? elementId.split('#')[1] : null;
 }
 
 ProjectView.prototype._findInsertionPointForList = function(pointerX)
@@ -333,7 +351,7 @@ ProjectView.prototype._deleteList = function(listId)
 
 ProjectView.prototype._createTaskPlaceholder = function(referenceElement)
 {
-	var ph = document.createElement("div");
+	var ph = document.createElement("li");
 	ph.className = "task-placeholder";
 	if (referenceElement) {
 		var style = window.getComputedStyle(referenceElement, null);
@@ -353,10 +371,10 @@ ProjectView.prototype._findInsertionPointForTask = function(list, pointerY)
 	var insertBeforeElement = null;
 	var minDist = Infinity;
 
-	pointerY -= list.element.offsetTop;
-	pointerY += list.element.scrollTop;
+	pointerY -= this._container.offsetTop;
+	pointerY += list.content.scrollTop;
 
-	for (var e = list.element.firstChild; e; e = e.nextSibling) {
+	for (var e = list.content.firstChild; e; e = e.nextSibling) {
 		if (e.className != "task") continue;
 
 		var distTop = Math.abs(e.offsetTop - pointerY);
@@ -383,13 +401,13 @@ ProjectView.prototype._createTask = function(listId, insertBeforeElement)
 {
 	var list = this._lists[listId];
 	var ph = this._createTaskPlaceholder(null);
-	list.element.insertBefore(ph, insertBeforeElement);
+	list.content.insertBefore(ph, insertBeforeElement);
 	var editor = new TaskEditor();
 
 	editor.show(ph, {}, function(taskData) {
 		if (!taskData) {
 			editor.hide();
-			list.element.removeChild(ph);
+			list.content.removeChild(ph);
 			return;
 		}
 		var request = {
@@ -402,7 +420,7 @@ ProjectView.prototype._createTask = function(listId, insertBeforeElement)
 			if (status != Request.STATUS_SUCCESS) return alert(result.message);
 
 			editor.hide();
-			list.element.removeChild(ph);
+			list.content.removeChild(ph);
 			taskData.taskId = result.taskId;
 			this._addTask(list, taskData, insertBeforeElement);
 		}.bind(this));
@@ -489,8 +507,8 @@ ProjectView.prototype._onDragTaskStart = function(taskId, event)
 	event.dataTransfer.setData("text", task.title);
 
 	setTimeout(function() {
-		list.element.insertBefore(ph, task.element);
-		list.element.removeChild(task.element);
+		list.content.insertBefore(ph, task.element);
+		list.content.removeChild(task.element);
 	}.bind(this), 0);
 
 	event.stopPropagation();
@@ -513,8 +531,8 @@ ProjectView.prototype._onWorkspaceDragOver = function(event)
 		var list = this._findNearestList(event.pageX);
 		var insertBeforeElement = this._findInsertionPointForTask(list, event.pageY);
 		var ph = this._dragInfo.placeholder;
-		if (ph.parentNode != list.element || ph.nextSibling != insertBeforeElement) {
-			list.element.insertBefore(ph, insertBeforeElement);
+		if (ph.parentNode != list.content || ph.nextSibling != insertBeforeElement) {
+			list.content.insertBefore(ph, insertBeforeElement);
 		}
 		event.dataTransfer.dropEffect = "move";
 		event.preventDefault();
@@ -592,15 +610,15 @@ ProjectView.prototype._onDragEnd = function(event)
 		var insertBeforeElement = srcNextTask ? srcNextTask.element : null;
 
 		if (navigator.userAgent.indexOf("Firefox") >= 0) {
-			srcList.element.insertBefore(ph, insertBeforeElement);
+			srcList.content.insertBefore(ph, insertBeforeElement);
 			window.setTimeout(function() {
-				srcList.element.removeChild(ph);
-				srcList.element.insertBefore(task.element, insertBeforeElement);
+				ph.parentNode.removeChild(ph);
+				srcList.content.insertBefore(task.element, insertBeforeElement);
 			}.bind(this), 400);
 		}
 		else {
-			srcList.element.removeChild(ph);
-			srcList.element.insertBefore(task.element, insertBeforeElement);
+			ph.parentNode.removeChild(ph);
+			srcList.content.insertBefore(task.element, insertBeforeElement);
 		}
 
 		this._dragInfo = null;

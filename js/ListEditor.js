@@ -20,7 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 function ListEditor()
 {
 	this._layer = document.createElement("div");
-	this._layer.className = "dialogBackground";
+	this._layer.className = "uiLayer";
 	this._layer.addEventListener('mousedown', this._cancel.bind(this));
 
 	this._container = document.createElement("div");

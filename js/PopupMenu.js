@@ -20,33 +20,33 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 function PopupMenu(menu)
 {
 	this._menuBox = document.createElement("div");
-	this._menuBox.className = "popupMenu";
+	this._menuBox.className = "PopupMenu";
 	this._menuBox.addEventListener('mousedown', function(evt) { evt.stopPropagation(); });
 
 	for (var i = 0; i < menu.length; i++) {
 		var item = document.createElement("div");
 		if (menu[i].title && menu[i].callback) {
-			item.className = "popupMenuItem";
+			item.className = "item";
 			item.innerHTML = menu[i].title.htmlEscape();
 			item.addEventListener('click', this._onItemClick.bind(this, menu[i].callback));
 			this._menuBox.appendChild(item);
 		}
 		else if (menu[i].title) {
-			item.className = "popupMenuItemDisabled";
+			item.className = "itemDisabled";
 			item.innerHTML = menu[i].title.htmlEscape();
 			this._menuBox.appendChild(item);
 		}
 		else {
-			item.className = "popupMenuSeparator";
+			item.className = "separator";
 			this._menuBox.appendChild(item);
 		}
 	}
 
-	this._dialogContainer = document.createElement("div");
-	this._dialogContainer.className = "dialogBackground";
-	this._dialogContainer.style.background = "transparent";
-	this._dialogContainer.addEventListener('mousedown', this._hide.bind(this));
-	this._dialogContainer.appendChild(this._menuBox);
+	this._layer = document.createElement("div");
+	this._layer.className = "uiLayer";
+	this._layer.style.background = "transparent";
+	this._layer.addEventListener('mousedown', this._hide.bind(this));
+	this._layer.appendChild(this._menuBox);
 }
 
 PopupMenu.show = function(x, y, menu)
@@ -57,7 +57,7 @@ PopupMenu.show = function(x, y, menu)
 
 PopupMenu.prototype._show = function(x, y)
 {
-	document.body.appendChild(this._dialogContainer);
+	document.body.appendChild(this._layer);
 	this._menuBox.style.left = x + "px";
 	this._menuBox.style.top = y + "px";
 	Keyboard.pushListener(this._onKeyDown.bind(this), null);
@@ -66,7 +66,7 @@ PopupMenu.prototype._show = function(x, y)
 PopupMenu.prototype._hide = function()
 {
 	Keyboard.popListener();
-	document.body.removeChild(this._dialogContainer);
+	document.body.removeChild(this._layer);
 }
 
 PopupMenu.prototype._onKeyDown = function(event)

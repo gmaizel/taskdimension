@@ -76,7 +76,8 @@ TaskEditor.prototype._onKeyDown = function(event)
 		break;
 
 	case Keyboard.RETURN:
-		if (event.ctrlKey) {
+		if (!event.ctrlKey && !event.shiftKey) {
+			event.preventDefault();
 			this._save();
 		}
 		break;

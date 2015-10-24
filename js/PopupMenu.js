@@ -60,6 +60,14 @@ PopupMenu.prototype._show = function(x, y)
 	document.body.appendChild(this._layer);
 	this._menuBox.style.left = x + "px";
 	this._menuBox.style.top = y + "px";
+
+	if (x + this._menuBox.offsetWidth > this._layer.offsetWidth) {
+		this._menuBox.style.left = (x - this._menuBox.offsetWidth) + "px";
+	}
+	if (y + this._menuBox.offsetHeight > this._layer.offsetHeight) {
+		this._menuBox.style.top = (y - this._menuBox.offsetHeight) + "px";
+	}
+
 	Keyboard.pushListener(this._onKeyDown.bind(this), null);
 }
 

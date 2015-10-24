@@ -69,6 +69,7 @@ div.PopupMenu {
 	padding: 0px;
 	border: 1px solid;
 	border-color: white #666666 #666666 white;
+	white-space: nowrap;
 	color:#000033;
 	background: #cccccc;
 	cursor: default;

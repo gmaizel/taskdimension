@@ -66,7 +66,7 @@ abstract class EndPoint
 			// Make sure all warnings are properly intercepted
 			set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
 				error_log("$errstr in $errfile on line $errline");
-				throw new Exception();
+				throw new Exception("PHP error at $errfile:$errline: $errstr");
 			});
 
 			if ($this->shouldValidteSession()) {
@@ -82,21 +82,29 @@ abstract class EndPoint
 				throw new Exception($e->getMessage(), self::STATUS_BAD_REQUEST);
 			}
 
-			$result = $this->handleRequest($args);
-
+			$result = null;
+			Model::beginTransaction();
 			try {
+				$result = $this->handleRequest($args);
 				$result = $this->getResponseValidator()->exec("RESPONSE", $result);
+				Model::commitTransaction();
 			}
 			catch (Validator\ValidationException $e) {
+				Model::rollbackTransaction();
 				throw new Exception($e->getMessage(), self::STATUS_SERVER_ERROR);
+			}
+			catch (Exception $e) {
+				Model::rollbackTransaction();
+				throw $e;
 			}
 
 			$this->sendResponse(self::STATUS_SUCCESS, $result);
 		}
 		catch(Exception $e) {
 			$code = $e->getCode() ?: self::STATUS_SERVER_ERROR;
+			$message = $e->getMessage();
 			$this->sendResponse($code, array(
-				self::FIELD_ERROR_MESSAGE => $e->getMessage()
+				self::FIELD_ERROR_MESSAGE => $message
 			));
 		}
 	}

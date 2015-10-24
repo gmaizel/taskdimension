@@ -17,6 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 require_once('../lib/EndPoint.php');
 require_once('../lib/Validator.php');
+require_once('../lib/TasksList.php');
 require_once('../lib/Task.php');
 
 class TaskCreate extends EndPoint
@@ -51,10 +52,25 @@ class TaskCreate extends EndPoint
 		$description = $request[self::FIELD_DESCRIPTION];
 		$beforeId = $request[self::FIELD_BEFORE_TASK_ID];
 
-		$task = Task::create($title, $description, $listId, $beforeId);
+		TasksList::lock($listId);
+
+		$ord = null;
+		if ($beforeId) {
+			$beforeTask = Task::fetch($beforeId);
+			if ($beforeTask->getListId() !== $listId) {
+				throw new Exception("Insertion point for a new task is in another list", EndPoint::STATUS_BAD_REQUEST);
+			}
+			$ord = $beforeTask->getOrd();
+			Task::shiftRight($listId, $ord);
+		}
+		else {
+			$ord = Task::getNextOrd($listId);
+		}
+
+		$taskId = Task::create($listId, $ord, $title, $description);
 
 		return array(
-			self::FIELD_TASK_ID	=> $task->getId()
+			self::FIELD_TASK_ID	=> $taskId
 		);
 	}
 }

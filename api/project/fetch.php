@@ -62,10 +62,10 @@ class ProjectFetch extends EndPoint
 		$projectId = $request[self::FIELD_PROJECT_ID];
 		$project = Project::fetch($projectId);
 
-		$lists = TasksList::fetchForProject($projectId);
+		$lists = TasksList::fetchAllInProject($projectId);
 		$listsRep = array();
 		foreach ($lists as $list) {
-			$tasks = Task::fetchForList($list->getId());
+			$tasks = Task::fetchAllInList($list->getId());
 			$tasksRep = array();
 			foreach ($tasks as $task) {
 				$tasksRep[] = array(

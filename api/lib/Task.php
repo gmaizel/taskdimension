@@ -15,7 +15,7 @@ You should have received a copy of the GNU Affero General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 */
 
-require_once(__DIR__ . '/Model.php');
+require_once('Model.php');
 
 class Task extends Model
 {
@@ -24,126 +24,93 @@ class Task extends Model
 
 	private $_id;
 	private $_listId;
+	private $_ord;
 	private $_title;
 	private $_description;
 
 	public function getId() { return $this->_id; }
+	public function getListId() { return $this->_listId; }
+	public function getOrd() { return $this->_ord; }
 	public function getTitle() { return $this->_title; }
 	public function getDescription() { return $this->_description; }
 
 	public function setTitle($title) { $this->_title = $title; }
 	public function setDescription($description) { $this->_description = $description; }
 
-	private function __construct()
+	private function __construct(array $row = null)
 	{
-	}
-
-	public static function fetchForList($listId)
-	{
-		$rows = self::dbQuery("select * from tasks where listId = ? order by ord", array($listId));
-		$tasks = array();
-		foreach ($rows as $row) {
-			$task = new Task();
-			$task->_id = (string)$row['id'];
-			$task->_listId = (string)$row['listId'];
-			$task->_title = $row['title'];
-			$task->_description = $row['description'];
-			$tasks[] = $task;
+		if ($row) {
+			$this->_id			= (string)$row['id'];
+			$this->_listId		= (string)$row['listId'];
+			$this->_ord			= (int)$row['ord'];
+			$this->_title		= (string)$row['title'];
+			$this->_description	= (string)$row['description'];
 		}
-		return $tasks;
 	}
 
 	public static function fetch($taskId)
 	{
 		$row = self::dbQueryRow("select * from tasks where id = ?", array($taskId));
-
 		if (!$row) {
 			throw new ObjectNotFoundException("Task with id=$taskId not found");
 		}
-
-		$task = new Task();
-		$task->_id = (string)$row['id'];
-		$task->_listId = (string)$row['listId'];
-		$task->_title = $row['title'];
-		$task->_description = $row['description'];
-		return $task;
+		return new Task($row);
 	}
 
-	public static function create($title, $description, $listId, $beforeTaskId = null)
+	public static function fetchAllInList($listId)
 	{
-		self::dbBeginTransaction();
-
-		$ord = null;
-		if ($beforeTaskId === null) {
-			$ord = self::dbQuerySingle("select ifnull(max(ord), 0) + 1 from tasks where listId = ?", array($listId));
+		$rows = self::dbQuery("select * from tasks where listId = ? order by ord", array($listId));
+		$tasks = array();
+		foreach ($rows as $row) {
+			$tasks[] = new Task($row);
 		}
-		else {
-			$ord = self::dbQuerySingle("select ord from tasks where id = ?", array($beforeTaskId));
-			self::dbExec("update tasks set ord = ord + 1 where listId = ? and ord >= ?", array($listId, $ord));
-		}
+		return $tasks;
+	}
 
+
+	public static function create($listId, $ord, $title, $description)
+	{
 		// FIXME:
 		$createdBy = 1;
 
-		self::dbExec("insert into tasks(listId, title, description, createdBy, ord) values(?, ?, ?, ?, ?)",
-			array($listId, $title, $description, $createdBy, $ord));
-
-		self::dbCommitTransaction();
-
-		$task = new Task();
-		$task->_id = (string)self::getLastRowId();
-		$task->_listId = $listId;
-		$task->_title = $title;
-		$task->_description = $description;
-		return $task;
+		self::dbExec("insert into tasks(listId, ord, title, description, createdBy) values(?, ?, ?, ?, ?)",
+			array($listId, $ord, $title, $description, $createdBy));
+		return self::getLastRowId();
 	}
 
-	public static function save(Task $task)
+	public static function update($taskId, $title, $description)
 	{
-		self::dbExec("update tasks set title = ?, description = ? where id = ?",
-			array($task->_title, $task->_description, $task->_id));
+		self::dbExec("update tasks set title = ?, description = ? where id = ?", array($title, $description, $taskId));
 	}
 
-	public static function move($taskId, $newListId, $beforeTaskId = null)
+	public static function updateListAndOrd($taskId, $listId, $ord)
 	{
-		self::dbBeginTransaction();
-
-		$taskRow = self::dbQueryRow("select * from tasks where id = ?", array($taskId));
-		if (!$taskRow) {
-			throw new ObjectNotFoundException("Task with id=$taskId not found");
-		}
-
-		$oldListId = $taskRow['listId'];
-		self::dbExec("update tasks set ord = ord - 1 where listId = ? and ord >= ?", array($oldListId, $taskRow['ord']));
-
-		$ord = null;
-		if ($beforeTaskId === null) {
-			$ord = self::dbQuerySingle("select ifnull(max(ord), 0) + 1 from tasks where listId = ?", array($newListId));
-		}
-		else {
-			$ord = self::dbQuerySingle("select ord from tasks where id = ?", array($beforeTaskId));
-			self::dbExec("update tasks set ord = ord + 1 where listId = ? and ord >= ?", array($newListId, $ord));
-		}
-
-		self::dbExec("update tasks set listId = ?, ord = ? where id = ?", array($newListId, $ord, $taskId));
-
-		self::dbCommitTransaction();
+		self::dbExec("update tasks set listId = ?, ord = ? where id = ?", array($listId, $ord, $taskId));
 	}
 
 	public static function erase($taskId)
 	{
-		self::dbBeginTransaction();
-
-		$taskRow = self::dbQueryRow("select * from tasks where id = ?", array($taskId));
-		if (!$taskRow) {
-			throw new ObjectNotFoundException("Task with id=$taskId not found");
-		}
-
-		self::dbExec("update tasks set ord = ord - 1 where listId = ? and ord >= ?",
-			array($taskRow['listId'], $taskRow['ord']));
-
 		self::dbExec("delete from tasks where id = ?", array($taskId));
+	}
 
-		self::dbCommitTransaction();
+	public static function lock(/* $taskId... */)
+	{
+		$taskIds = func_get_args();
+		self::dbExec("select id from tasks where id in ? for update", array($taskIds));
+	}
+
+	public static function getNextOrd($listId)
+	{
+		return self::dbQuerySingle("select ifnull(max(ord), 0) + 1 from tasks where listId = ?", array($listId));
+	}
+
+	public static function shiftRight($listId, $startOrd)
+	{
+		self::dbExec("update tasks set ord = ord + 1 where listId = ? and ord >= ?", array($listId, $startOrd));
+	}
+
+	public static function shiftLeft($listId, $startOrd)
+	{
+		self::dbExec("update tasks set ord = ord - 1 where listId = ? and ord >= ?", array($listId, $startOrd));
 	}
 }

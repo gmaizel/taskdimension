@@ -17,6 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 require_once('../lib/EndPoint.php');
 require_once('../lib/Validator.php');
+require_once('../lib/Project.php');
 require_once('../lib/TasksList.php');
 
 class ListUpdate extends EndPoint
@@ -28,7 +29,7 @@ class ListUpdate extends EndPoint
 	{
 		return new ValidatorObject(array(
 			self::FIELD_LIST_ID	=> new ValidatorID(),
-			self::FIELD_TITLE	=> new ValidatorOptional(new ValidatorString(1, TasksList::MAX_TITLE_LENGTH))
+			self::FIELD_TITLE	=> new ValidatorString(1, TasksList::MAX_TITLE_LENGTH)
 		));
 	}
 
@@ -40,14 +41,8 @@ class ListUpdate extends EndPoint
 	protected function handleRequest(array $request)
 	{
 		$listId = $request[self::FIELD_LIST_ID];
-		$list = TasksList::fetch($listId);
-
 		$title = $request[self::FIELD_TITLE];
-		if ($title !== null) {
-			$list->setTitle($title);
-		}
-
-		TasksList::save($list);
+		TasksList::update($listId, $title);
 	}
 }
 

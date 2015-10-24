@@ -17,6 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 require_once('../lib/EndPoint.php');
 require_once('../lib/Validator.php');
+require_once('../lib/TasksList.php');
 require_once('../lib/Task.php');
 
 class TaskDelete extends EndPoint
@@ -38,7 +39,14 @@ class TaskDelete extends EndPoint
 	protected function handleRequest(array $request)
 	{
 		$taskId = $request[self::FIELD_TASK_ID];
+
+		$task = Task::fetch($taskId);
+		$listId = $task->getListId();
+
+		TasksList::lock($listId);
+
 		Task::erase($taskId);
+		Task::shiftLeft($listId, $task->getOrd());
 	}
 }
 

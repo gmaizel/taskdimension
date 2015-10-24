@@ -15,6 +15,8 @@ You should have received a copy of the GNU Affero General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 */
 
+require_once('config.php');
+
 class ObjectNotFoundException extends Exception
 {
 	public function __construct($message)
@@ -35,10 +37,10 @@ class RecordSet implements Iterator
 		$this->next();
 	}
 
-		public function current()
-		{
-			return $this->_current;
-		}
+	public function current()
+	{
+		return $this->_current;
+	}
 
 	public function key()
 	{
@@ -48,7 +50,11 @@ class RecordSet implements Iterator
 	public function next()
 	{
 		$this->_index++;
-		$this->_current = $this->_records->fetchArray(SQLITE3_ASSOC);
+		$this->_current = $this->_records->fetch_assoc();
+		Model::dbCheckError();
+		if (!$this->_current) {
+			$this->_records->free();
+		}
 	}
 
 	public function rewind()
@@ -68,53 +74,80 @@ abstract class Model
 
 	protected static function dbExec($query, array $params = null)
 	{
-		self::getDB()->exec(self::applyQueryParams($query, $params));
+		self::getDB()->query(self::applyQueryParams($query, $params));
+		self::dbCheckError();
 	}
 
 	protected static function dbQuery($query, array $params = null)
 	{
 		$result = self::getDB()->query(self::applyQueryParams($query, $params));
+		self::dbCheckError();
 		return new RecordSet($result);
 	}
 
 	protected static function dbQuerySingle($query, array $params = null)
 	{
-		$result = self::getDB()->querySingle(self::applyQueryParams($query, $params));
-		return $result;
+		$result = self::getDB()->query(self::applyQueryParams($query, $params));
+		self::dbCheckError();
+		$row = $result->fetch_row();
+		self::dbCheckError();
+		$result->free();
+		return ($row && isset($row[0])) ? $row[0] : null;
 	}
 
 	protected static function dbQueryRow($query, array $params = null)
 	{
-		$result = self::getDB()->querySingle(self::applyQueryParams($query, $params), true);
-		return $result;
+		$result = self::getDB()->query(self::applyQueryParams($query, $params));
+		self::dbCheckError();
+		$row = $result->fetch_assoc();
+		self::dbCheckError();
+		$result->free();
+		return $row;
 	}
 
 	protected static function getLastRowId()
 	{
-		return self::getDB()->lastInsertRowID();
+		return (string)(self::getDB()->insert_id);
 	}
 
-	protected static function dbBeginTransaction()
+	public static function beginTransaction()
 	{
-		// FIXME:
+		self::getDB()->begin_transaction();
+		self::dbCheckError();
 	}
 
-	protected static function dbCommitTransaction()
+	public static function commitTransaction()
 	{
-		// FIXME:
+		self::getDB()->commit();
+		self::dbCheckError();
 	}
 
-	protected static function dbRollbackTransaction()
+	public static function rollbackTransaction()
 	{
-		// FIXME:
+		self::getDB()->rollback();
+		self::dbCheckError();
 	}
 
 	private static function getDB()
 	{
 		if (!self::$_db) {
-			self::$_db = new SQLite3(__DIR__ . "/../../db/taskdimension.sqlite", SQLITE3_OPEN_READWRITE);
+			self::$_db = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE);
+			if (self::$_db->connect_error) {
+				throw new Exception("SQL connect failed: " . self::$_db->connect_error);
+			}
+			self::$_db->set_charset("utf8mb4");
+			self::dbCheckError();
 		}
 		return self::$_db;
+	}
+
+	public static function dbCheckError()
+	{
+		if (self::$_db) {
+			if (self::$_db->error) {
+				throw new Exception("SQL error: " . self::$_db->error);
+			}
+		}
 	}
 
 	private static function applyQueryParams($query, array $params = null)
@@ -123,21 +156,7 @@ abstract class Model
 
 		$lastIdx = 0;
 		foreach ($params as $rawParam) {
-			$escapedParam = null;
-			if (is_null($rawParam)) {
-				$escapedParam = "null";
-			}
-			else if (is_string($rawParam)) {
-				$escapedParam = "'" . self::getDB()->escapeString($rawParam) . "'";
-			}
-			else if (is_numeric($rawParam)) {
-				$escapedParam = "$rawParam";
-			}
-			else {
-				$t = var_export($rawParam, true);
-				throw new Exception("Failed to escape SQL param: $t in ``$query``");
-			}
-
+			$escapedParam = self::escapeParam($rawParam);
 			$idx = strpos($query, '?', $lastIdx);
 			if ($idx === false) {
 				throw new Exception("SQL params number mismatch in ``$query``");
@@ -153,5 +172,29 @@ abstract class Model
 		}
 
 		return $query;
+	}
+
+	private static function escapeParam($rawParam)
+	{
+		if (is_null($rawParam)) {
+			return "null";
+		}
+		else if (is_string($rawParam)) {
+			return "'" . self::getDB()->escape_string($rawParam) . "'";
+		}
+		else if (is_numeric($rawParam)) {
+			return "$rawParam";
+		}
+		else if (is_array($rawParam)) {
+			$escapedParams = array();
+			foreach ($rawParam as $p) {
+				$escapedParams[] = self::escapeParam($p);
+			}
+			return "(" . implode(", ", $escapedParams) . ")";
+		}
+		else {
+			$t = var_export($rawParam, true);
+			throw new Exception("Failed to escape SQL param: $t in ``$query``");
+		}
 	}
 }

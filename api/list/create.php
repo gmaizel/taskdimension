@@ -17,6 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 require_once('../lib/EndPoint.php');
 require_once('../lib/Validator.php');
+require_once('../lib/Project.php');
 require_once('../lib/TasksList.php');
 
 class ListCreate extends EndPoint
@@ -45,13 +46,28 @@ class ListCreate extends EndPoint
 	protected function handleRequest(array $request)
 	{
 		$projectId = $request[self::FIELD_PROJECT_ID];
-		$title = $request[self::FIELD_TITLE];
 		$beforeId = $request[self::FIELD_BEFORE_LIST_ID];
+		$title = $request[self::FIELD_TITLE];
 
-		$list = TasksList::create($title, $projectId, $beforeId);
+		Project::lock($projectId);
+
+		$ord = null;
+		if ($beforeId) {
+			$beforeList = TasksList::fetch($beforeId);
+			if ($beforeList->getProjectId() !== $projectId) {
+				throw new Exception("Insertion point for a new list is in another project", EndPoint::STATUS_BAD_REQUEST);
+			}
+			$ord = $beforeList->getOrd();
+			TasksList::shiftRight($projectId, $ord);
+		}
+		else {
+			$ord = TasksList::getNextOrd($projectId);
+		}
+
+		$listId = TasksList::create($projectId, $ord, $title);
 
 		return array(
-			self::FIELD_LIST_ID	=> $list->getId()
+			self::FIELD_LIST_ID	=> $listId
 		);
 	}
 }

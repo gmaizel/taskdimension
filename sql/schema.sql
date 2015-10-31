@@ -45,3 +45,10 @@ create table tasks (
 
     index `listId,ord` (`listId`,`ord`)
 ) engine=InnoDB;
+
+
+-- default user, password is '123456'
+insert into users(fullName, login, password) values('User', 'user', '0|41f5367a132b0bab95ce1a7a259a81de8ad700f084cdedf897995b63e958df01|4cc8457a0fba2d04a040e6dd2daf867f6ef69c1a483251d81d34930b04a1ebe0d022f37e101f816fb685c4e260326e5775cfaca194234653cc21814d30c4bb7f');
+
+-- default project
+insert into projects(title, description, ord, createdBy) values('My Project', '', 0, 1);

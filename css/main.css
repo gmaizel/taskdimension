@@ -29,7 +29,6 @@ body {
 	-moz-user-select: none;
 	-webkit-user-select: none;
 	font-family: Verdana, sans-serif;
-	background: #666680;
 }
 
 input[type=button], input[type=text], textarea {
@@ -39,6 +38,9 @@ input[type=button], input[type=text], textarea {
 
 input[type=button] {
 	margin-left: 8px;
+	min-width: 80px;
+	height: 22px;
+	line-height: 22px;
 }
 
 input[type=button]:focus, input[type=text]:focus, textarea:focus {
@@ -96,7 +98,7 @@ div.PopupMenu>div.separator {
 	border-bottom: 1px solid white;
 }
 
-div.confirmBox {
+div.Alert {
 	position: absolute;
 	width: 250px;
 	padding: 12px 16px;
@@ -107,7 +109,7 @@ div.confirmBox {
 	box-shadow: black 0px 0px 10px;
 }
 
-div.confirmBox>h2 {
+div.Alert>h2 {
 	display: block;
 	width:100%;
 	padding: 0px;
@@ -119,21 +121,45 @@ div.confirmBox>h2 {
 	text-align: center;
 }
 
-/* Project view, lists and tasks */
-
-div.ProjectView {
+div.Alert>div {
 	display: block;
-	width: 100%;
-	height: 100%;
-	position: relative;
-	white-space: nowrap;
+	width:100%;
+	padding: 0px;
+	margin:0px 4px 12px 4px;
+	color: white;
+	font-family: Verdana, sans-serif;
+	font-size: 14px;
+	font-weight: normal;
+	text-align: center;
 }
 
-div.ProjectView>h1 {
+div.about {
+	width: 600px;
+}
+
+div.about>div {
+	text-align: left;
+	overflow: auto;
+	height: 400px;
+	padding-right: 10px;
+	user-select: text;
+	-moz-user-select: text;
+	-webkit-user-select: text;
+}
+
+/* Common components */
+
+div.PageHeader {
+	background: #333333;
+	height: 40px;
+	box-shadow: 0px -5px 5px 5px black;
+	position: relative;
+}
+
+div.PageHeader>h1 {
 	display: inline-block;
-	height: 20px;
 	margin: 0px;
-	padding: 15px 10px;
+	padding: 5px 10px;
 	color: white;
 	font-family: Verdana, sans-serif;
 	font-size: 24px;
@@ -141,11 +167,49 @@ div.ProjectView>h1 {
 	cursor: default;
 }
 
+div.PageHeader>div.pageMenu {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 24px;
+	height: 24px;
+	padding:0px;
+	margin: 0px;
+	border: 1px solid #808080;
+	border-radius: 4px;
+	text-align: center;
+	font-family: serif;
+	font-weight: bold;
+	font-size: 20px;
+	line-height: 24px;
+	cursor: default;
+	background: #404040;
+	color: white;
+	transition: background-color 250ms, box-shadow 250ms;
+}
+
+div.PageHeader>div.pageMenu:hover {
+	background: #50a0ff;
+	box-shadow: #5070ff 0px 0px 2px 2px;
+}
+
+
+/* Project view */
+
+div.ProjectView {
+	display: block;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	white-space: nowrap;
+	background: #666666;
+}
+
 div.ProjectView>div.container {
 	display: block;
 	position: absolute;
 	width: 100%;
-	top: 50px;
+	top: 40px;
 	bottom: 0px;
 	padding: 0;
 	margin: 0;
@@ -157,7 +221,7 @@ div.list {
 	vertical-align: top;
 	display: inline-block;
 	width: 220px;
-	margin: 8px;
+	margin: 16px 8px 8px 8px;
 	padding: 0px;
 }
 
@@ -231,7 +295,7 @@ div.list-placeholder {
 	box-sizing: border-box;
 	width: 220px;
 	height: 140px;
-	margin: 8px;
+	margin: 16px 8px 8px 8px;
 	padding: 8px;
 	border: 1px dashed #808080;
 	border-radius: 10px;

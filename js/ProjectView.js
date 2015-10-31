@@ -21,13 +21,23 @@ function ProjectView(projectData)
 {
 	this._projectId = projectData.projectId;
 
-	this._element = this._container = document.createElement("div");
+	this._element = document.createElement("div");
 	this._element.className = "ProjectView";
+
+	this._pageHeader = document.createElement("div");
+	this._pageHeader.className = "PageHeader";
+	this._element.appendChild(this._pageHeader);
 
 	this._header = document.createElement("h1");
 	this._header.innerHTML = projectData.title.htmlEscape();
 	this._header.title = projectData.description;
-	this._element.appendChild(this._header);
+	this._pageHeader.appendChild(this._header);
+
+	this._menuIcon = document.createElement("div");
+	this._menuIcon.className = "pageMenu";
+	this._menuIcon.innerHTML = "i";
+	this._menuIcon.addEventListener('click', this._onAbout.bind(this));
+	this._pageHeader.appendChild(this._menuIcon);
 
 	this._container = document.createElement("div");
 	this._container.className = "container";
@@ -50,6 +60,11 @@ function ProjectView(projectData)
 ProjectView.prototype.getDOM = function()
 {
 	return this._element;
+}
+
+ProjectView.prototype._onAbout = function()
+{
+	AboutBox.show();
 }
 
 ProjectView.prototype._addList = function(listData, insertBeforeElement)
@@ -349,7 +364,7 @@ ProjectView.prototype._deleteList = function(listId)
 	var list = this._lists[listId];
 	var message = "Are you sure you want to delete list " + list.title + "?";
 
-	Confirm.show(message, ["Delete", "Cancel"], function(buttonIndex) {
+	Alert.show(message, "", ["Delete", "Cancel"], function(buttonIndex) {
 		if (buttonIndex === 0) {
 			Request.send("api/list/delete.php", {listId:listId}, function(status, result) {
 				if (status != Request.STATUS_SUCCESS) return alert(result.message);
@@ -469,7 +484,7 @@ ProjectView.prototype._deleteTask = function(taskId)
 	var task = this._tasks[taskId];
 
 	var message = "Are you sure you want to delete task " + task.title + "?";
-	Confirm.show(message, ["Delete", "Cancel"], function(buttonIndex) {
+	Alert.show(message, "", ["Delete", "Cancel"], function(buttonIndex) {
 		if (buttonIndex === 0) {
 			Request.send("api/task/delete.php", {taskId:taskId}, function(status, result) {
 				if (status != Request.STATUS_SUCCESS) return alert(result.message);

@@ -48,3 +48,25 @@ Request.send = function(url, params, callback)
 	rq.setRequestHeader("content-type", "application/json; charset=UTF-8");
 	rq.send(body);
 }
+
+Request.fetchText = function(url, callback)
+{
+	var rq = new XMLHttpRequest();
+
+	rq.onreadystatechange = function(event)
+	{
+		if(rq.readyState == 4) {
+			var responseBody = null;
+			if (rq.status != Request.STATUS_SUCCESS) {
+				responseBody = {message: "Request Failed"};
+			}
+			else {
+				responseBody = {text: rq.responseText};
+			}
+			callback(rq.status, responseBody);
+		}
+	};
+
+	rq.open("GET", url);
+	rq.send();
+}

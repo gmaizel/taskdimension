@@ -17,13 +17,21 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 "use strict";
 
-function Confirm(message, buttons, callback)
+function Alert(title, message, buttons, callback, options)
 {
-	this._dialogBox = document.createElement("div");
-	this._dialogBox.className = "confirmBox";
-	var messageBox = document.createElement("h2");
-	messageBox.innerHTML = message.htmlEscape();
-	this._dialogBox.appendChild(messageBox);
+	options = options || {};
+	this._alertBox = document.createElement("div");
+	this._alertBox.className = options.className || "Alert";
+	var titleBox = document.createElement("h2");
+	titleBox.innerHTML = title.htmlEscape();
+	this._alertBox.appendChild(titleBox);
+	var messageBox = document.createElement("div");
+	messageBox.innerHTML = options.isHTML ? message : message.htmlEscape();
+	this._alertBox.appendChild(messageBox);
+
+	if (options.enableContextMenu) {
+		this._alertBox.addEventListener('contextmenu', function(event) { event.stopPropagation(); });
+	}
 
 	this._firstButton = null;
 	for (var i = 0; i < buttons.length; i++) {
@@ -31,54 +39,58 @@ function Confirm(message, buttons, callback)
 		button.type = "button";
 		button.value = buttons[i];
 		button.addEventListener('click', this._onbuttonClick.bind(this, i));
-		this._dialogBox.appendChild(button);
+		this._alertBox.appendChild(button);
 		this._firstButton = this._firstButton || button;
 	}
 
 	this._layer = document.createElement("div");
 	this._layer.className = "uiLayer";
-	this._layer.appendChild(this._dialogBox);
+	this._layer.appendChild(this._alertBox);
 
 	this._callback = callback;
 }
 
-Confirm.show = function(message, buttons, callback)
+Alert.show = function(title, message, buttons, callback, options)
 {
-	var c = new Confirm(message, buttons, callback);
+	var c = new Alert(title, message, buttons, callback, options);
 	c._show();
 }
 
-Confirm.prototype._show = function()
+Alert.prototype._show = function()
 {
 	document.body.appendChild(this._layer);
-	var left = ((this._layer.offsetWidth - this._dialogBox.offsetWidth) / 2) | 0;
-	var top = ((this._layer.offsetHeight - this._dialogBox.offsetHeight) / 2) | 0;
-	this._dialogBox.style.left = left + "px";
-	this._dialogBox.style.top = top + "px";
+	var left = ((this._layer.offsetWidth - this._alertBox.offsetWidth) / 2) | 0;
+	var top = ((this._layer.offsetHeight - this._alertBox.offsetHeight) / 2) | 0;
+	this._alertBox.style.left = left + "px";
+	this._alertBox.style.top = top + "px";
 	Keyboard.pushListener(this._onKeyDown.bind(this), null);
 	if (this._firstButton) {
 		this._firstButton.focus();
 	}
 }
 
-Confirm.prototype._hide = function()
+Alert.prototype._hide = function()
 {
 	Keyboard.popListener();
 	document.body.removeChild(this._layer);
 }
 
-Confirm.prototype._onKeyDown = function(event)
+Alert.prototype._onKeyDown = function(event)
 {
 	switch (event.keyCode) {
 	case Keyboard.ESCAPE:
 		this._hide();
-		this._callback(-1);
+		if (this._callback) {
+			this._callback(-1);
+		}
 		break;
 	}
 }
 
-Confirm.prototype._onbuttonClick = function(index)
+Alert.prototype._onbuttonClick = function(index)
 {
 	this._hide();
-	this._callback(index);
+	if (this._callback) {
+		this._callback(index);
+	}
 }

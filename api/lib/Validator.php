@@ -106,8 +106,46 @@ class ValidatorID extends Validator
 	}
 }
 
+class ValidatorInteger extends Validator
+{
+	private $_min;
+	private $_max;
+
+	public function __construct($min = null, $max = null)
+	{
+		$this->_min = $min;
+		$this->_max = $max;
+	}
+
+	public function exec($name, $value)
+	{
+		if (!is_integer($value)) {
+			throw new ValidationException("$name should be an integer");
+		}
+
+		if (($this->_min !== null && $value < $this->_min)
+			|| ($this->_max !== null && $value > $this->_max)) {
+			if ($this->_min === null) {
+				throw new ValidationException("$name should not be greater than $this->_max");
+			}
+			else if ($this->_max === null) {
+				throw new ValidationException("$name should not be less than $this->_min");
+			}
+			else {
+				throw new ValidationException("$name should be between $this->_min and $this->_max");
+			}
+		}
+
+		return $value;
+	}
+}
+
+
 class ValidatorString extends Validator
 {
+	private $_minLength;
+	private $_maxLength;
+
 	public function __construct($minLength, $maxLength)
 	{
 		$this->_minLength = $minLength;

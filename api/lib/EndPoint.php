@@ -120,14 +120,15 @@ abstract class EndPoint
 			throw new Exception("Unsupported HTTP method", self::STATUS_BAD_METHOD);
 		}
 
-		if ($_SERVER['CONTENT_TYPE'] !== 'application/json; charset=UTF-8') {
+		$contentType = str_replace(' ', '', strtolower($_SERVER['CONTENT_TYPE']));
+		if ($contentType !== 'application/json;charset=utf-8') {
 			throw new Exception("Unsupported content type", self::STATUS_BAD_MEDIA_TYPE);
 		}
 
 		$requestJson = file_get_contents("php://input");
 		$request = json_decode($requestJson, true);
 
-		if ($request == null) {
+		if ($request === null) {
 			throw new Exception("Failed to parse request body", self::STATUS_BAD_REQUEST);
 		}
 
@@ -138,7 +139,7 @@ abstract class EndPoint
 	{
 		header("HTTP/1.0 $code");
 		header("Content-Type: application/json; charset=UTF-8");
-		$json = json_encode($response) ?: "{}";
+		$json = json_encode($response, JSON_UNESCAPED_UNICODE) ?: "{}";
 		echo ($json === "[]") ? "{}" : $json;
 	}
 }

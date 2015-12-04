@@ -148,7 +148,17 @@ ProjectView.prototype._updateTask = function(task, taskData)
 {
 	task.title = taskData.title;
 	task.description = taskData.description;
-	task.element.innerHTML = task.title.htmlEscape();
+
+	var title = task.title.htmlEscape();
+	var tags = "";
+	while (title.charAt(0) === '[') {
+		var endIdx = title.indexOf(']');
+		if (endIdx < 0) break;
+		var tagText = title.substr(1, endIdx - 1);
+		title = title.substr(endIdx + 1);
+		tags += "<span class='tag blue'>" + tagText + "</span>";
+	}
+	task.element.innerHTML = tags + title.trim();
 	task.element.title = task.description;
 }
 

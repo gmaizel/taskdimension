@@ -30,12 +30,12 @@ function ProjectsListView()
 	this._header.innerHTML = "Task Dimension - Projects";
 	this._pageHeader.appendChild(this._header);
 
-	this._menuIcon = document.createElement("div");
-	this._menuIcon.className = "headerButton menu";
-	this._menuIcon.innerHTML = "i";
-	this._menuIcon.title = "About";
-	this._menuIcon.addEventListener('click', AboutBox.show);
-	this._pageHeader.appendChild(this._menuIcon);
+	this._infoIcon = document.createElement("div");
+	this._infoIcon.className = "headerButton info";
+	this._infoIcon.innerHTML = "i";
+	this._infoIcon.title = "About";
+	this._infoIcon.addEventListener('click', AboutBox.show);
+	this._pageHeader.appendChild(this._infoIcon);
 
 	this._container = document.createElement("div");
 	this._container.className = "container";

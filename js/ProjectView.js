@@ -29,6 +29,8 @@ function ProjectView(projectId)
 	this._tasks = {};
 	this._dragInfo = null;
 
+	this._settings = new LocalSettings(projectId);
+
 	this._element = document.createElement("div");
 	this._element.className = "ProjectView";
 
@@ -48,16 +50,27 @@ function ProjectView(projectId)
 
 	this._menuIcon = document.createElement("div");
 	this._menuIcon.className = "headerButton menu";
-	this._menuIcon.innerHTML = "i";
-	this._menuIcon.title = "About";
-	this._menuIcon.addEventListener('click', AboutBox.show);
+	this._menuIcon.innerHTML = "&#9881;";
+	this._menuIcon.title = "View settings";
+	this._menuIcon.addEventListener('click', this._onViewSettings.bind(this));
 	this._pageHeader.appendChild(this._menuIcon);
+
+	this._infoIcon = document.createElement("div");
+	this._infoIcon.className = "headerButton info";
+	this._infoIcon.innerHTML = "i";
+	this._infoIcon.title = "About";
+	this._infoIcon.addEventListener('click', AboutBox.show);
+	this._pageHeader.appendChild(this._infoIcon);
 
 	this._container = document.createElement("div");
 	this._container.className = "container";
 	this._element.appendChild(this._container);
 
-	Request.send("api/project/fetch.php", {"projectId" : projectId}, function(status, data) {
+	var request = {
+		"projectId" : projectId,
+		"excludeClosedTasks" : this._settings.getHideClosedTasks()
+	};
+	Request.send("api/project/fetch.php", request, function(status, data) {
 		if (status == Request.STATUS_SUCCESS) {
 			View.setTitle(data.title + " - Task Dimension");
 			this._header.innerHTML = data.title.htmlEscape();
@@ -438,6 +451,15 @@ ProjectView.prototype._deleteList = function(listId)
 
 ProjectView.prototype._reorderListByTasksStatus = function(listId)
 {
+	if (this._settings.getHideClosedTasks()) {
+		Alert.show("Tasks are filtered",
+			"Cannot reorder list while closed tasks are hidden. " +
+			"Please uncheck the 'Hide closed tasks' option in the View Settings and try again.",
+			["Ok"]
+		);
+		return;
+	}
+
 	Request.send("api/list/reorder-by-task-status.php", {listId: listId}, function(status, result) {
 		if (status != Request.STATUS_SUCCESS) return alert(result.message);
 
@@ -550,6 +572,9 @@ ProjectView.prototype._createTask = function(listId, insertBeforeElement)
 			description: taskData.description,
 			beforeTaskId: this._getTaskIdFromElement(insertBeforeElement)
 		};
+		if (this._settings.getHideClosedTasks() && !request.beforeTaskId) {
+			request.afterLastOpen = true;
+		}
 		Request.send("api/task/create.php", request, function(status, result) {
 			if (status != Request.STATUS_SUCCESS) return alert(result.message);
 
@@ -596,7 +621,12 @@ ProjectView.prototype._setTaskStatus = function(taskId, taskStatus)
 	Request.send("api/task/update-status.php", request, function(status, result) {
 		if (status != Request.STATUS_SUCCESS) return alert(result.message);
 		var task = this._tasks[taskId];
-		this._updateTask(task, {status: taskStatus});
+		if (taskStatus == TaskStatus.CLOSED && this._settings.getHideClosedTasks()) {
+			this._removeTask(task);
+		}
+		else {
+			this._updateTask(task, {status: taskStatus});
+		}
 	}.bind(this));
 }
 
@@ -613,6 +643,24 @@ ProjectView.prototype._deleteTask = function(taskId)
 			}.bind(this));
 		}
 	}.bind(this));
+}
+
+// === View settings ===
+
+ProjectView.prototype._onViewSettings = function()
+{
+	var x = this._menuIcon.offsetLeft + this._menuIcon.offsetWidth;
+	var y = this._menuIcon.offsetTop + this._menuIcon.offsetHeight + 2;
+
+	PopupMenu.show(x, y, [
+		{title:"Hide closed tasks", check: this._settings.getHideClosedTasks(), callback: this._toggleHideClosedTasks.bind(this)}
+	]);
+}
+
+ProjectView.prototype._toggleHideClosedTasks = function()
+{
+	this._settings.setHideClosedTasks(!this._settings.getHideClosedTasks());
+	View.reload();
 }
 
 // === Drag & Drop ===
@@ -713,7 +761,15 @@ ProjectView.prototype._onWorkspaceDragDrop = function(event)
 		ph.parentNode.removeChild(ph);
 		var nextTaskId = this._getTaskIdFromElement(task.element.nextSibling);
 		if (newListId != this._dragInfo.srcListId || nextTaskId != this._dragInfo.srcNextTaskId) {
-			Request.send("api/task/move.php", {taskId: task.id, listId: newListId, beforeTaskId: nextTaskId}, function(status, result) {
+			var request = {
+				taskId: task.id,
+				listId: newListId,
+				beforeTaskId: nextTaskId
+			};
+			if (this._settings.getHideClosedTasks() && !request.beforeTaskId) {
+				request.afterLastOpen = true;
+			}
+			Request.send("api/task/move.php", request, function(status, result) {
 				if (status != Request.STATUS_SUCCESS) return alert(result.message);
 			});
 		}

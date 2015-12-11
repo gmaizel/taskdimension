@@ -140,4 +140,14 @@ class Task extends Model
 		}
 		return $taskIds;
 	}
+
+	public static function findNextTaskIdAfterLastOpenTask($listId)
+	{
+		$ord = self::dbQuerySingle("select ord from tasks where listId = ? and status <> ? "
+			. "order by ord desc limit 1", array($listId, Task::STATUS_CLOSED));
+		if ($ord !== null) {
+			return self::dbQuerySingle("select id from tasks where listId = ? and ord = ?", array($listId, $ord + 1));
+		}
+		return null;
+	}
 }

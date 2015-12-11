@@ -24,6 +24,7 @@ require_once('../lib/Task.php');
 class ProjectFetch extends EndPoint
 {
 	const FIELD_PROJECT_ID = "projectId";
+	const FIELD_EXCLUDE_CLOSED_TASKS = "excludeClosedTasks";
 
 	const FIELD_TITLE = "title";
 	const FIELD_DESCRIPTION = "description";
@@ -36,7 +37,8 @@ class ProjectFetch extends EndPoint
 	protected function getRequestValidator()
 	{
 		return new ValidatorObject(array(
-			self::FIELD_PROJECT_ID => new ValidatorID()
+			self::FIELD_PROJECT_ID => new ValidatorID(),
+			self::FIELD_EXCLUDE_CLOSED_TASKS => new ValidatorBoolean()
 		));
 	}
 
@@ -62,6 +64,7 @@ class ProjectFetch extends EndPoint
 	protected function handleRequest(array $request)
 	{
 		$projectId = $request[self::FIELD_PROJECT_ID];
+		$excludeClosedTasks = $request[self::FIELD_EXCLUDE_CLOSED_TASKS];
 		$project = Project::fetch($projectId);
 
 		$lists = TasksList::fetchAllInProject($projectId);
@@ -70,6 +73,10 @@ class ProjectFetch extends EndPoint
 			$tasks = Task::fetchAllInList($list->getId());
 			$tasksRep = array();
 			foreach ($tasks as $task) {
+				if ($excludeClosedTasks && $task->getStatus() == Task::STATUS_CLOSED) {
+					continue;
+				}
+
 				$tasksRep[] = array(
 					self::FIELD_TASK_ID	=> $task->getId(),
 					self::FIELD_TITLE	=> $task->getTitle(),

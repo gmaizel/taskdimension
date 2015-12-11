@@ -204,6 +204,13 @@ div.PageHeader>div.back {
 
 div.PageHeader>div.menu {
 	top: 8px;
+	right: 40px;
+	font-size: 16px;
+	line-height: 24px;
+}
+
+div.PageHeader>div.info {
+	top: 8px;
 	right: 8px;
 	font-size: 20px;
 	line-height: 24px;

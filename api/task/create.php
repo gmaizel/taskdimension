@@ -26,6 +26,7 @@ class TaskCreate extends EndPoint
 	const FIELD_TITLE = "title";
 	const FIELD_DESCRIPTION = "description";
 	const FIELD_BEFORE_TASK_ID = "beforeTaskId";
+	const FIELD_AFTER_LAST_OPEN = "afterLastOpen";
 	const FIELD_TASK_ID = "taskId";
 
 	protected function getRequestValidator()
@@ -34,7 +35,8 @@ class TaskCreate extends EndPoint
 			self::FIELD_LIST_ID	=> new ValidatorID(),
 			self::FIELD_TITLE	=> new ValidatorString(1, Task::MAX_TITLE_LENGTH),
 			self::FIELD_DESCRIPTION	=> new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH),
-			self::FIELD_BEFORE_TASK_ID => new ValidatorOptional(new ValidatorID())
+			self::FIELD_BEFORE_TASK_ID => new ValidatorOptional(new ValidatorID()),
+			self::FIELD_AFTER_LAST_OPEN => new ValidatorOptional(new ValidatorBoolean())
 		));
 	}
 
@@ -51,6 +53,12 @@ class TaskCreate extends EndPoint
 		$title = $request[self::FIELD_TITLE];
 		$description = $request[self::FIELD_DESCRIPTION];
 		$beforeId = $request[self::FIELD_BEFORE_TASK_ID];
+
+		if (isset($request[self::FIELD_AFTER_LAST_OPEN])) {
+			if ($request[self::FIELD_AFTER_LAST_OPEN]) {
+				$beforeId = Task::findNextTaskIdAfterLastOpenTask($listId);
+			}
+		}
 
 		TasksList::lock($listId);
 

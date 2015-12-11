@@ -165,3 +165,14 @@ class ValidatorString extends Validator
 		return $value;
 	}
 }
+
+class ValidatorBoolean extends Validator
+{
+	public function exec($name, $value)
+	{
+		if (!is_bool($value)) {
+			throw new ValidationException("$name should be boolean");
+		}
+		return $value;
+	}
+}

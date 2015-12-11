@@ -25,13 +25,15 @@ class TaskMove extends EndPoint
 	const FIELD_TASK_ID = "taskId";
 	const FIELD_LIST_ID = "listId";
 	const FIELD_BEFORE_TASK_ID = "beforeTaskId";
+	const FIELD_AFTER_LAST_OPEN = "afterLastOpen";
 
 	protected function getRequestValidator()
 	{
 		return new ValidatorObject(array(
 			self::FIELD_TASK_ID	=> new ValidatorID(),
 			self::FIELD_LIST_ID	=> new ValidatorID(),
-			self::FIELD_BEFORE_TASK_ID => new ValidatorOptional(new ValidatorID())
+			self::FIELD_BEFORE_TASK_ID => new ValidatorOptional(new ValidatorID()),
+			self::FIELD_AFTER_LAST_OPEN => new ValidatorOptional(new ValidatorBoolean())
 		));
 	}
 
@@ -45,6 +47,13 @@ class TaskMove extends EndPoint
 		$taskId = $request[self::FIELD_TASK_ID];
 		$dstListId = $request[self::FIELD_LIST_ID];
 		$beforeTaskId = $request[self::FIELD_BEFORE_TASK_ID];
+
+		if (isset($request[self::FIELD_AFTER_LAST_OPEN])) {
+			if ($request[self::FIELD_AFTER_LAST_OPEN]) {
+				$beforeTaskId = Task::findNextTaskIdAfterLastOpenTask($dstListId);
+			}
+		}
+
 		$task = Task::fetch($taskId);
 		$srcListId = $task->getListId();
 

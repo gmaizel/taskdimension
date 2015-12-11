@@ -68,6 +68,29 @@ Known issues
   manually.
 * Line breaks may be inconsistent between task view and task editor.
 
+Change Log
+----------
+
+### version 0.2
+
+* Proper support for multiple projects
+	* Added projects list view
+		* Create/edit/delete projects
+	* Added API for exporting/importing a project (UI will be available later)
+	* Display current project name in browser tab/window title
+
+* Added description to tasks
+
+* Added status (Open/Closed) to tasks
+	* Option to hide/show Closed tasks (hidden by default)
+	* Reorder tasks in list according to status (Open, then Closed)
+
+* Decorate [tags] in task titles
+
+### version 0.1
+
+* Initial version
+
 Contacts
 --------
 

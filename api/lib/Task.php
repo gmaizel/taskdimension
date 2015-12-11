@@ -67,7 +67,6 @@ class Task extends Model
 		return $tasks;
 	}
 
-
 	public static function create($listId, $ord, $title, $description)
 	{
 		// FIXME:

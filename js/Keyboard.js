@@ -111,15 +111,17 @@ Keyboard.pushListener = function(keyDownCallback, keyUpCallback)
 	Keyboard._stack.push({down:keyDownCallback, up:keyUpCallback});
 }
 
+Keyboard.replaceStack = function(keyDownCallback, keyUpCallback)
+{
+	Keyboard._stack = [];
+	Keyboard.pushListener(keyDownCallback, keyUpCallback);
+}
+
 Keyboard.popListener = function()
 {
 	Keyboard._stack.pop();
 }
 
-Keyboard.popAllListeners = function()
-{
-	Keyboard._stack = [];
-}
 
 document.addEventListener("keydown", function(event) {
 	if (Keyboard._stack.length > 0) {

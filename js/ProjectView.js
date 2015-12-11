@@ -17,9 +17,12 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 "use strict";
 
-function ProjectView(projectData)
+function ProjectView(projectId)
 {
-	this._projectId = projectData.projectId;
+	this._projectId = projectId;
+	this._lists = {};
+	this._tasks = {};
+	this._dragInfo = null;
 
 	this._element = document.createElement("div");
 	this._element.className = "ProjectView";
@@ -29,42 +32,60 @@ function ProjectView(projectData)
 	this._element.appendChild(this._pageHeader);
 
 	this._header = document.createElement("h1");
-	this._header.innerHTML = projectData.title.htmlEscape();
-	this._header.title = projectData.description;
 	this._pageHeader.appendChild(this._header);
 
+	this._backIcon = document.createElement("div");
+	this._backIcon.className = "headerButton back";
+	this._backIcon.innerHTML = "&#9664;";
+	this._backIcon.title = "Back to projects list";
+	this._backIcon.addEventListener('click', View.showProjectsList.bind(View));
+	this._pageHeader.appendChild(this._backIcon);
+
 	this._menuIcon = document.createElement("div");
-	this._menuIcon.className = "pageMenu";
+	this._menuIcon.className = "headerButton menu";
 	this._menuIcon.innerHTML = "i";
-	this._menuIcon.addEventListener('click', this._onAbout.bind(this));
+	this._menuIcon.title = "About";
+	this._menuIcon.addEventListener('click', AboutBox.show);
 	this._pageHeader.appendChild(this._menuIcon);
 
 	this._container = document.createElement("div");
 	this._container.className = "container";
-	this._container.addEventListener('contextmenu', this._onWorkspaceContextMenu.bind(this));
-	this._container.addEventListener('dragover', this._onWorkspaceDragOver.bind(this));
-	this._container.addEventListener('drop', this._onWorkspaceDragDrop.bind(this));
 	this._element.appendChild(this._container);
 
-	this._lists = {};
-	this._tasks = {};
+	Request.send("api/project/fetch.php", {"projectId" : projectId}, function(status, data) {
+		if (status == Request.STATUS_SUCCESS) {
+			this._header.innerHTML = data.title.htmlEscape();
+			this._header.title = data.description;
 
-	for (var i = 0; i < projectData.lists.length; i++) {
-		var listData = projectData.lists[i];
-		this._addList(listData);
-	}
+			for (var i = 0; i < data.lists.length; i++) {
+				var listData = data.lists[i];
+				this._addList(listData);
+			}
 
-	this._dragInfo = null;
-}
+			this._container.addEventListener('contextmenu', this._onWorkspaceContextMenu.bind(this));
+			this._container.addEventListener('dragover', this._onWorkspaceDragOver.bind(this));
+			this._container.addEventListener('drop', this._onWorkspaceDragDrop.bind(this));
+		}
+		else {
+			var errorBox = document.createElement("div");
+			errorBox.className = "errorMessage";
+			errorBox.innerHTML = "<h2>" + data.message.htmlEscape() + "</h2>" +
+				"<div>" + data.description.htmlEscape() + "</div>";
+			this._container.appendChild(errorBox);
 
-ProjectView.prototype.getDOM = function()
-{
-	return this._element;
-}
+			var retryButton = document.createElement("input");
+			retryButton.type = "button";
+			retryButton.value = "Try Again"
+			retryButton.addEventListener('click', View.reload.bind(View));
+			errorBox.appendChild(retryButton);
 
-ProjectView.prototype._onAbout = function()
-{
-	AboutBox.show();
+			var backButton = document.createElement("input");
+			backButton.type = "button";
+			backButton.value = "All Projects"
+			backButton.addEventListener('click', View.showProjectsList.bind(View));
+			errorBox.appendChild(backButton);
+		}
+	}.bind(this));
 }
 
 ProjectView.prototype._addList = function(listData, insertBeforeElement)

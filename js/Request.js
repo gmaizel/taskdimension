@@ -35,8 +35,15 @@ Request.send = function(url, params, callback)
 		if(rq.readyState == 4) {
 			var responseBody = null;
 			try { responseBody = JSON.parse(rq.responseText); } catch(e) { }
-			if (rq.status != Request.STATUS_SUCCESS && !(responseBody && responseBody.message)) {
-				responseBody = {message: "Request Failed"};
+			if (rq.status != Request.STATUS_SUCCESS) {
+				responseBody = responseBody || {};
+				if (!responseBody.message) {
+					responseBody.message = "Network Error";
+					responseBody.description = "Failed to communicate with the server.";
+				}
+				else if (!responseBody.description) {
+					responseBody.description = "";
+				}
 			}
 			callback(rq.status, responseBody);
 		}

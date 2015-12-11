@@ -55,6 +55,16 @@ class Project extends Model
 		return new Project($row);
 	}
 
+	public static function fetchAll()
+	{
+		$rows = self::dbQuery("select * from projects order by ord");
+		$projects = array();
+		foreach ($rows as $row) {
+			$projects[] = new Project($row);
+		}
+		return $projects;
+	}
+
 	public static function create($ord, $title, $description)
 	{
 		// FIXME:
@@ -91,5 +101,15 @@ class Project extends Model
 	public static function getNextOrd()
 	{
 		return self::dbQuerySingle("select ifnull(max(ord), 0) + 1 from projects");
+	}
+
+	public static function shiftRight($startOrd)
+	{
+		self::dbExec("update projects set ord = ord + 1 where ord >= ?", array($startOrd));
+	}
+
+	public static function shiftLeft($startOrd)
+	{
+		self::dbExec("update projects set ord = ord - 1 where ord >= ?", array($startOrd));
 	}
 }

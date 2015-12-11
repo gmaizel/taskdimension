@@ -86,7 +86,7 @@ class ProjectFetch extends EndPoint
 			self::FIELD_PROJECT_ID	=> $project->getId(),
 			self::FIELD_TITLE 		=> $project->getTitle(),
 			self::FIELD_DESCRIPTION => $project->getDescription(),
-			self::FIELD_LISTS		=> $listsRep,
+			self::FIELD_LISTS		=> $listsRep
 		);
 	}
 }

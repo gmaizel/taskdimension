@@ -18,13 +18,53 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 // prevent unwanted context menus
 document.addEventListener('contextmenu', function(evt) { evt.preventDefault(); });
 
+var View = {};
+
+View.showProject = function(projectId) {
+	history.pushState(null, null, "#projectId=" + projectId);
+	View._onHashChange();
+}
+
+View.showProjectsList = function() {
+	history.pushState(null, null, "#");
+	View._onHashChange();
+}
+
+View.reload = function() {
+	View._onHashChange();
+}
+
+View._onHashChange = function()
+{
+	var params = document.location.hash.replace(/^#\??/, '').split('&');
+	var paramsMap = {};
+	for (var i = 0; i < params.length; i++) {
+		var idx = params[i].indexOf('=');
+		if (idx <= 0) {
+			continue;
+		}
+		var key = params[i].substr(0, idx);
+		if (!/^[a-zA-Z]+$/.test(key)) {
+			continue;
+		}
+		var value = decodeURIComponent(params[i].substr(idx + 1));
+		paramsMap[key] = value;
+	}
+
+	if ('projectId' in paramsMap) {
+		var view = new ProjectView(paramsMap['projectId']);
+	}
+	else {
+		var view = new ProjectsListView();
+	}
+
+	Keyboard.replaceStack(null, null);
+	document.body.innerHTML = "";
+	document.body.appendChild(view._element);
+}
+
 function main()
 {
-	Request.send("api/project/fetch.php", {"projectId" : "1"}, function(status, data) {
-		if (status != Request.STATUS_SUCCESS) return alert(data.message);
-
-		var pView = new ProjectView(data);
-		document.body.innerHTML = "";
-		document.body.appendChild(pView.getDOM());
-	});
+	window.addEventListener("hashchange", View._onHashChange.bind(View));
+	View._onHashChange();
 }

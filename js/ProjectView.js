@@ -54,6 +54,7 @@ function ProjectView(projectId)
 
 	Request.send("api/project/fetch.php", {"projectId" : projectId}, function(status, data) {
 		if (status == Request.STATUS_SUCCESS) {
+			View.setTitle(data.title + " - Task Dimension");
 			this._header.innerHTML = data.title.htmlEscape();
 			this._header.title = data.description;
 
@@ -67,6 +68,7 @@ function ProjectView(projectId)
 			this._container.addEventListener('drop', this._onWorkspaceDragDrop.bind(this));
 		}
 		else {
+			View.setTitle("Error");
 			var errorBox = document.createElement("div");
 			errorBox.className = "errorMessage";
 			errorBox.innerHTML = "<h2>" + data.message.htmlEscape() + "</h2>" +

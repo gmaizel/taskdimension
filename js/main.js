@@ -20,18 +20,26 @@ document.addEventListener('contextmenu', function(evt) { evt.preventDefault(); }
 
 var View = {};
 
-View.showProject = function(projectId) {
+View.showProject = function(projectId)
+{
 	history.pushState(null, null, "#projectId=" + projectId);
 	View._onHashChange();
 }
 
-View.showProjectsList = function() {
+View.showProjectsList = function()
+{
 	history.pushState(null, null, "#");
 	View._onHashChange();
 }
 
-View.reload = function() {
+View.reload = function()
+{
 	View._onHashChange();
+}
+
+View.setTitle = function(title)
+{
+	document.title = title;
 }
 
 View._onHashChange = function()

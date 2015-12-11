@@ -45,7 +45,7 @@ function ProjectsListView()
 
 	Request.send("api/project/list.php", {}, function(status, data) {
 		if (status == Request.STATUS_SUCCESS) {
-
+			View.setTitle("Projects - Task Dimension");
 			for (var i = 0; i < data.projects.length; i++) {
 				var projectData = data.projects[i];
 				this._addProject(projectData);
@@ -56,6 +56,7 @@ function ProjectsListView()
 			this._container.addEventListener('drop', this._onWorkspaceDragDrop.bind(this));
 		}
 		else {
+			View.setTitle("Error");
 			var errorBox = document.createElement("div");
 			errorBox.className = "errorMessage";
 			errorBox.innerHTML = "<h2>" + data.message.htmlEscape() + "</h2>" +

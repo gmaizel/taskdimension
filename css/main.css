@@ -79,7 +79,7 @@ div.PopupMenu {
 }
 
 div.PopupMenu>div.item {
-	padding: 4px 10px;
+	padding: 4px 18px 4px 0px;
 	color: black;
 }
 
@@ -88,8 +88,14 @@ div.PopupMenu>div.item:hover {
 }
 
 div.PopupMenu>div.itemDisabled {
-	padding: 4px 10px;
+	padding: 4px 10px 4px 0px;
 	color: #999999;
+}
+
+div.PopupMenu span.check {
+	display: inline-block;
+	padding: 0px 4px;
+	width: 10px;
 }
 
 div.PopupMenu>div.separator {

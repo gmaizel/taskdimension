@@ -24,16 +24,18 @@ function PopupMenu(menu)
 	this._menuBox.addEventListener('mousedown', function(evt) { evt.stopPropagation(); });
 
 	for (var i = 0; i < menu.length; i++) {
+		var check = "<span class='check'>" + (menu[i].check? "&#10003;" : "") + "</span>";
+
 		var item = document.createElement("div");
 		if (menu[i].title && menu[i].callback) {
 			item.className = "item";
-			item.innerHTML = menu[i].title.htmlEscape();
+			item.innerHTML = check + menu[i].title.htmlEscape();
 			item.addEventListener('click', this._onItemClick.bind(this, menu[i].callback));
 			this._menuBox.appendChild(item);
 		}
 		else if (menu[i].title) {
 			item.className = "itemDisabled";
-			item.innerHTML = menu[i].title.htmlEscape();
+			item.innerHTML = check + menu[i].title.htmlEscape();
 			this._menuBox.appendChild(item);
 		}
 		else {

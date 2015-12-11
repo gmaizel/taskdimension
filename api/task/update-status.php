@@ -19,18 +19,16 @@ require_once('../lib/EndPoint.php');
 require_once('../lib/Validator.php');
 require_once('../lib/Task.php');
 
-class TaskUpdate extends EndPoint
+class TaskUpdateStatus extends EndPoint
 {
 	const FIELD_TASK_ID = "taskId";
-	const FIELD_TITLE = "title";
-	const FIELD_DESCRIPTION = "description";
+	const FIELD_TASK_STATUS = "status";
 
 	protected function getRequestValidator()
 	{
 		return new ValidatorObject(array(
-			self::FIELD_TASK_ID	=> new ValidatorID(),
-			self::FIELD_TITLE	=> new ValidatorString(1, Task::MAX_TITLE_LENGTH),
-			self::FIELD_DESCRIPTION	=> new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH)
+			self::FIELD_TASK_ID => new ValidatorID(),
+			self::FIELD_TASK_STATUS => new ValidatorInteger(Task::STATUS_MIN, Task::STATUS_MAX)
 		));
 	}
 
@@ -42,10 +40,9 @@ class TaskUpdate extends EndPoint
 	protected function handleRequest(array $request)
 	{
 		$taskId = $request[self::FIELD_TASK_ID];
-		$title = $request[self::FIELD_TITLE];
-		$description = $request[self::FIELD_DESCRIPTION];
-		Task::update($taskId, $title, $description);
+		$status = $request[self::FIELD_TASK_STATUS];
+		Task::updateStatus($taskId, $status);
 	}
 }
 
-(new TaskUpdate())->handle();
+(new TaskUpdateStatus())->handle();

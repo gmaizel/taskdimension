@@ -23,13 +23,14 @@ require_once('../lib/Task.php');
 
 class ProjectExport extends EndPoint
 {
-	const CURRENT_PROTOCOL_VERSION = 1;
+	const CURRENT_PROTOCOL_VERSION = 2;
 
 	const FIELD_PROJECT_ID = "projectId";
 
 	const FIELD_PROTOCOL_VERSION = "version";
 	const FIELD_TITLE = "title";
 	const FIELD_DESCRIPTION = "description";
+	const FIELD_TASK_STATUS = "status";
 	const FIELD_LISTS = "lists";
 	const FIELD_TASKS = "tasks";
 
@@ -50,7 +51,8 @@ class ProjectExport extends EndPoint
 				self::FIELD_TITLE		=> new ValidatorString(1, TasksList::MAX_TITLE_LENGTH),
 				self::FIELD_TASKS		=> new ValidatorArray(new ValidatorObject(array(
 					self::FIELD_TITLE	=> new ValidatorString(1, Task::MAX_TITLE_LENGTH),
-					self::FIELD_DESCRIPTION => new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH)
+					self::FIELD_DESCRIPTION => new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH),
+					self::FIELD_TASK_STATUS => new ValidatorInteger(0)
 				)))
 			)))
 		));
@@ -69,7 +71,9 @@ class ProjectExport extends EndPoint
 			foreach ($tasks as $task) {
 				$tasksRep[] = array(
 					self::FIELD_TITLE	=> $task->getTitle(),
-					self::FIELD_DESCRIPTION => $task->getDescription()
+					self::FIELD_DESCRIPTION => $task->getDescription(),
+					self::FIELD_TASK_STATUS => $task->getStatus()
+
 				);
 			}
 

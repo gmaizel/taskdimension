@@ -140,7 +140,6 @@ class ValidatorInteger extends Validator
 	}
 }
 
-
 class ValidatorString extends Validator
 {
 	private $_minLength;

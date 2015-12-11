@@ -17,6 +17,11 @@ with this program. If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>.
 
 "use strict";
 
+var TaskStatus = {
+	CLOSED: 0,
+	OPEN: 1
+};
+
 function ProjectView(projectId)
 {
 	this._projectId = projectId;
@@ -169,8 +174,15 @@ ProjectView.prototype._addTask = function(list, taskData, insertBeforeElement)
 
 ProjectView.prototype._updateTask = function(task, taskData)
 {
-	task.title = taskData.title;
-	task.description = taskData.description;
+	if ('title' in taskData) {
+		task.title = taskData.title;
+	}
+	if ('description' in taskData) {
+		task.description = taskData.description;
+	}
+	if ('status' in taskData) {
+		task.status = taskData.status;
+	}
 
 	var title = task.title.htmlEscape();
 	var tags = "";
@@ -181,7 +193,13 @@ ProjectView.prototype._updateTask = function(task, taskData)
 		title = title.substr(endIdx + 1);
 		tags += "<span class='tag blue'>" + tagText + "</span>";
 	}
-	task.element.innerHTML = tags + title.trim();
+	title = title.trim();
+
+	if (task.status == TaskStatus.CLOSED) {
+		title = "<span class='closed'>" + title + "</span>";
+	}
+
+	task.element.innerHTML = tags + title;
 	task.element.title = task.description;
 }
 
@@ -230,8 +248,17 @@ ProjectView.prototype._onTaskContextMenu = function(taskId, event)
 	var insertBeforeList = this._findInsertionPointForList(event.pageX);
 	var insertBeforeTask = this._findInsertionPointForTask(list, event.pageY);
 
+	var toggleStatusItem = null;
+	if (task.status == TaskStatus.OPEN) {
+		toggleStatusItem = {title: "Close Task", callback: this._setTaskStatus.bind(this, taskId, TaskStatus.CLOSED)};
+	}
+	else {
+		toggleStatusItem = {title: "Reopen Task", callback: this._setTaskStatus.bind(this, taskId, TaskStatus.OPEN)};
+	}
+
 	PopupMenu.show(event.clientX, event.clientY, [
 		{title:"Edit Task...", callback: this._editTask.bind(this, taskId)},
+		toggleStatusItem,
 		{title:"Delete Task", callback: this._deleteTask.bind(this, taskId)},
 		{},
 		{title:"Add Task...", callback: this._createTask.bind(this, listId, insertBeforeTask)},
@@ -509,6 +536,19 @@ ProjectView.prototype._editTask = function(taskId)
 			editor.hide();
 			this._updateTask(task, updatedTaskData);
 		}.bind(this));
+	}.bind(this));
+}
+
+ProjectView.prototype._setTaskStatus = function(taskId, taskStatus)
+{
+	var request = {
+		taskId: taskId,
+		status: taskStatus
+	};
+	Request.send("api/task/update-status.php", request, function(status, result) {
+		if (status != Request.STATUS_SUCCESS) return alert(result.message);
+		var task = this._tasks[taskId];
+		this._updateTask(task, {status: taskStatus});
 	}.bind(this));
 }
 

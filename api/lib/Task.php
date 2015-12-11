@@ -19,6 +19,11 @@ require_once('Model.php');
 
 class Task extends Model
 {
+	const STATUS_MIN = 0;
+	const STATUS_CLOSED = 0;
+	const STATUS_OPEN = 1;
+	const STATUS_MAX = 1;
+
 	const MAX_TITLE_LENGTH = 256;
 	const MAX_DESCRIPTION_LENGTH = 4096;
 
@@ -27,15 +32,18 @@ class Task extends Model
 	private $_ord;
 	private $_title;
 	private $_description;
+	private $_status;
 
 	public function getId() { return $this->_id; }
 	public function getListId() { return $this->_listId; }
 	public function getOrd() { return $this->_ord; }
 	public function getTitle() { return $this->_title; }
 	public function getDescription() { return $this->_description; }
+	public function getStatus() { return $this->_status; }
 
 	public function setTitle($title) { $this->_title = $title; }
 	public function setDescription($description) { $this->_description = $description; }
+	public function setStatus($status) { $this->_status = $status; }
 
 	private function __construct(array $row = null)
 	{
@@ -45,6 +53,7 @@ class Task extends Model
 			$this->_ord			= (int)$row['ord'];
 			$this->_title		= (string)$row['title'];
 			$this->_description	= (string)$row['description'];
+			$this->_status		= (int)$row['status'];
 		}
 	}
 
@@ -72,14 +81,19 @@ class Task extends Model
 		// FIXME:
 		$createdBy = 1;
 
-		self::dbExec("insert into tasks(listId, ord, title, description, createdBy) values(?, ?, ?, ?, ?)",
-			array($listId, $ord, $title, $description, $createdBy));
+		self::dbExec("insert into tasks(listId, ord, title, description, status, createdBy) values(?, ?, ?, ?, ?, ?)",
+			array($listId, $ord, $title, $description, self::STATUS_OPEN, $createdBy));
 		return self::getLastRowId();
 	}
 
 	public static function update($taskId, $title, $description)
 	{
 		self::dbExec("update tasks set title = ?, description = ? where id = ?", array($title, $description, $taskId));
+	}
+
+	public static function updateStatus($taskId, $status)
+	{
+		self::dbExec("update tasks set status = ? where id = ?", array($status, $taskId));
 	}
 
 	public static function updateListAndOrd($taskId, $listId, $ord)

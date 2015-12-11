@@ -1,0 +1,38 @@
+Export schema versions
+======================
+
+Version 1
+=========
+
+struct Project {
+	int version;
+	string title;
+	string description;
+	List[] lists;
+}
+
+struct List {
+	string title;
+	string description;
+	Task[] tasks;
+}
+
+struct Task {
+	string title;
+	string description;
+}
+
+
+Version 2
+=========
+
+struct Task {
+	string title;
+	string description;
+++	TaskStatus status;
+}
+
+enum TaskStatus {
+	CLOSED = 0
+	OPEN = 1
+}

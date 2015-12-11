@@ -23,8 +23,10 @@ require_once('../lib/Task.php');
 
 class ProjectImport extends EndPoint
 {
+	const FIELD_PROTOCOL_VERSION = "version";
 	const FIELD_TITLE = "title";
 	const FIELD_DESCRIPTION = "description";
+	const FIELD_TASK_STATUS = "status";
 	const FIELD_LISTS = "lists";
 	const FIELD_TASKS = "tasks";
 
@@ -33,13 +35,15 @@ class ProjectImport extends EndPoint
 	protected function getRequestValidator()
 	{
 		return new ValidatorObject(array(
+			self::FIELD_PROTOCOL_VERSION => new ValidatorInteger(1),
 			self::FIELD_TITLE 			=> new ValidatorString(1, Project::MAX_TITLE_LENGTH),
 			self::FIELD_DESCRIPTION 	=> new ValidatorString(0, Project::MAX_DESCRIPTION_LENGTH),
 			self::FIELD_LISTS			=> new ValidatorArray(new ValidatorObject(array(
 				self::FIELD_TITLE		=> new ValidatorString(1, TasksList::MAX_TITLE_LENGTH),
 				self::FIELD_TASKS		=> new ValidatorArray(new ValidatorObject(array(
 					self::FIELD_TITLE	=> new ValidatorString(1, Task::MAX_TITLE_LENGTH),
-					self::FIELD_DESCRIPTION => new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH)
+					self::FIELD_DESCRIPTION => new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH),
+					self::FIELD_TASK_STATUS => new ValidatorOptional(new ValidatorInteger(0))
 				)))
 			)))
 		));
@@ -54,21 +58,26 @@ class ProjectImport extends EndPoint
 
 	protected function handleRequest(array $request)
 	{
-		$title = $request[self::FIELD_TITLE];
-		$description = $request[self::FIELD_DESCRIPTION];
-		$projectId = Project::create(Project::getNextOrd(), $title, $description);
+		$version = $request[self::FIELD_PROTOCOL_VERSION];
+		$projectTitle = $request[self::FIELD_TITLE];
+		$projectDescription = $request[self::FIELD_DESCRIPTION];
+		$projectId = Project::create(Project::getNextOrd(), $projectTitle, $projectDescription);
 
 		$listsRep = $request[self::FIELD_LISTS];
 		$listOrd = 0;
 		foreach ($listsRep as $listRep) {
-			$title = $listRep[self::FIELD_TITLE];
-			$listId = TasksList::create($project->getId(), ++$listOrd, $projectId);
+			$listTitle = $listRep[self::FIELD_TITLE];
+			$listId = TasksList::create($projectId, ++$listOrd, $listTitle);
 			$tasksRep = $listRep[self::FIELD_TASKS];
 			$taskOrd = 0;
 			foreach ($tasksRep as $taskRep) {
-				$title = $taskRep[self::FIELD_TITLE];
-				$description = $taskRep[self::FIELD_DESCRIPTION];
-				Task::create($listId, ++$taskOrd, $title, $description);
+				$taskTitle = $taskRep[self::FIELD_TITLE];
+				$taskDescription = $taskRep[self::FIELD_DESCRIPTION];
+				$taskId = Task::create($listId, ++$taskOrd, $taskTitle, $taskDescription);
+				if ($version > 1) {
+					$taskStatus = $taskRep[self::FIELD_TASK_STATUS];
+					Task::updateStatus($taskId, $taskStatus);
+				}
 			}
 		}
 

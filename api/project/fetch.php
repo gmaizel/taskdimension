@@ -31,6 +31,7 @@ class ProjectFetch extends EndPoint
 	const FIELD_LIST_ID = "listId";
 	const FIELD_TASKS = "tasks";
 	const FIELD_TASK_ID = "taskId";
+	const FIELD_TASK_STATUS = "status";
 
 	protected function getRequestValidator()
 	{
@@ -51,7 +52,8 @@ class ProjectFetch extends EndPoint
 				self::FIELD_TASKS		=> new ValidatorArray(new ValidatorObject(array(
 					self::FIELD_TASK_ID	=> new ValidatorID(),
 					self::FIELD_TITLE	=> new ValidatorString(1, Task::MAX_TITLE_LENGTH),
-					self::FIELD_DESCRIPTION => new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH)
+					self::FIELD_DESCRIPTION => new ValidatorString(0, Task::MAX_DESCRIPTION_LENGTH),
+					self::FIELD_TASK_STATUS => new ValidatorInteger(0)
 				)))
 			)))
 		));
@@ -71,7 +73,8 @@ class ProjectFetch extends EndPoint
 				$tasksRep[] = array(
 					self::FIELD_TASK_ID	=> $task->getId(),
 					self::FIELD_TITLE	=> $task->getTitle(),
-					self::FIELD_DESCRIPTION => $task->getDescription()
+					self::FIELD_DESCRIPTION => $task->getDescription(),
+					self::FIELD_TASK_STATUS => $task->getStatus()
 				);
 			}
 

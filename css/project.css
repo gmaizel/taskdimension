@@ -103,6 +103,12 @@ div.list>ul>li.task>span.green {
 	border-color: #60ff60;
 }
 
+div.list>ul>li.task>span.closed {
+	color: #808080;
+	text-decoration: line-through;
+	font-style: italic;
+}
+
 div.list>footer {
 	display: block;
 	height: 10px;

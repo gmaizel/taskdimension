@@ -126,4 +126,18 @@ class Task extends Model
 	{
 		self::dbExec("update tasks set ord = ord - 1 where listId = ? and ord >= ?", array($listId, $startOrd));
 	}
+
+	public static function reorderByStatus($listId)
+	{
+		$rows = self::dbQuery("select id from tasks where listId = ? order by status desc, ord", array($listId));
+		$taskIds = array();
+		$ord = 1;
+		foreach ($rows as $row) {
+			$taskId = (string)$row['id'];
+			$taskIds[] = $taskId;
+			self::updateListAndOrd($taskId, $listId, $ord);
+			$ord++;
+		}
+		return $taskIds;
+	}
 }

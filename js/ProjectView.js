@@ -230,6 +230,7 @@ ProjectView.prototype._onListContextMenu = function(listId, event)
 	var insertBeforeTask = this._findInsertionPointForTask(list, event.pageY);
 	PopupMenu.show(event.clientX, event.clientY, [
 		{title:"Add Task...", callback: this._createTask.bind(this, listId, insertBeforeTask)},
+		{title:"Reorder Tasks by Status", callback:this._reorderListByTasksStatus.bind(this, listId)},
 		{},
 		{title:"Rename List...", callback: this._editList.bind(this, listId)},
 		{title:"Delete List", callback: this._deleteList.bind(this, listId)},
@@ -262,6 +263,7 @@ ProjectView.prototype._onTaskContextMenu = function(taskId, event)
 		{title:"Delete Task", callback: this._deleteTask.bind(this, taskId)},
 		{},
 		{title:"Add Task...", callback: this._createTask.bind(this, listId, insertBeforeTask)},
+		{title:"Reorder Tasks by Status", callback:this._reorderListByTasksStatus.bind(this, listId)},
 		{},
 		{title:"Rename List...", callback: this._editList.bind(this, listId)},
 		{title:"Delete List", callback: this._deleteList.bind(this, listId)},
@@ -434,6 +436,51 @@ ProjectView.prototype._deleteList = function(listId)
 	}.bind(this));
 }
 
+ProjectView.prototype._reorderListByTasksStatus = function(listId)
+{
+	Request.send("api/list/reorder-by-task-status.php", {listId: listId}, function(status, result) {
+		if (status != Request.STATUS_SUCCESS) return alert(result.message);
+
+		var errorsCount = 0;
+
+		var tasksData = [];
+		for (var i = 0; i < result.taskIds.length; i++) {
+			var taskId = result.taskIds[i];
+			var task = this._tasks[taskId];
+			if (!task) {
+				errorsCount++;
+				continue;
+			}
+
+			this._removeTask(task);
+			tasksData.push({
+				taskId: taskId,
+				title: task.title,
+				description: task.description,
+				status: task.status
+			});
+		}
+
+		var list = this._lists[listId];
+
+		while (list.content.firstChild) {
+			errorsCount++;
+			taskId = this._getTaskIdFromElement(list.content.firstChild);
+			var task = this._tasks[taskId];
+			this._removeTask(task);
+		}
+
+		for (var i = 0; i < tasksData.length; i++) {
+			this._addTask(list, tasksData[i]);
+		}
+
+		if (errorsCount > 0) {
+			alert("There were data consistency problems, please reload");
+		}
+	}.bind(this));
+}
+
+
 // === Task CRUD operations ===
 
 ProjectView.prototype._createTaskPlaceholder = function(referenceElement)
@@ -509,6 +556,7 @@ ProjectView.prototype._createTask = function(listId, insertBeforeElement)
 			editor.hide();
 			list.content.removeChild(ph);
 			taskData.taskId = result.taskId;
+			taskData.status = TaskStatus.OPEN;
 			this._addTask(list, taskData, insertBeforeElement);
 		}.bind(this));
 	}.bind(this));
